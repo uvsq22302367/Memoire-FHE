@@ -1,0 +1,56 @@
+\documentclass[12pt, a4paper, oneside]{report}
+
+% --- PACKAGES FONDAMENTAUX ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage[a4paper, margin=2.5cm]{geometry}
+\usepackage{csquotes}
+
+% --- MATHÉMATIQUES ---
+\usepackage{amsmath, amssymb, amsfonts, amsthm}
+\usepackage{mathtools}
+\usepackage{stmaryrd} 
+
+% --- CONFIGURATION DES ENVIRONNEMENTS ---
+\theoremstyle{plain}
+\newtheorem{theorem}{Théorème}[chapter]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemme}
+\newtheorem{corollary}[theorem]{Corollaire}
+
+\theoremstyle{definition}
+\newtheorem{definition}{Définition}[chapter]
+\newtheorem{example}{Exemple}[chapter]
+\newtheorem{problem}{Problème}[chapter]
+
+\theoremstyle{remark}
+\newtheorem*{remark}{Remarque}
+
+% --- RÉFÉRENCES ---
+\usepackage[style=numeric, backend=biber]{biblatex}
+\addbibresource{bibliographie.bib} 
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+
+\title{Étude du Chiffrement Totalement Homomorphe :\\ De DGHV à TFHE et CKKS}
+\author{Constantin Delahodde, Martin Chedozeau, Lucas Schaeffer}
+\date{Année Universitaire 2025-2026}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+\input{chap1_intro}
+
+\input{chap2_dghv}
+
+\input{chap3_tfhe}
+
+\input{chap4_ckks}
+
+\nocite{*}
+\printbibliography
+
+\end{document}

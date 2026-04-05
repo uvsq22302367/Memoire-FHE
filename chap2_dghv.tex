@@ -1,0 +1,109 @@
+\chapter{Le schéma DGHV : Chiffrement sur les entiers}
+
+\section{Le problème AGCD}
+
+La sécurité du schéma DGHV repose sur le problème du Plus Grand Commun Diviseur Approximatif (AGCD).
+
+\begin{problem}[AGCD]
+Soit un entier secret $p$. Si l'on fournit plusieurs multiples exacts $x_i = p \cdot q_i$, un simple calcul de PGCD permet de retrouver $p$. Cependant, si l'on ajoute une petite perturbation ou "bruit" $r_i$ à ces multiples ($x_i = p \cdot q_i + r_i$), retrouver $p$ devient extrêmement complexe. C'est ce principe qui masque la clé dans le DGHV.
+\end{problem}
+
+\begin{example}[Vulnérabilité sans bruit vs Protection]
+Le bruit n'est pas un défaut, mais un composant structurel indispensable. Supposons un scénario sans bruit où un attaquant intercepte deux chiffrés : $x_1 = 91$ et $x_2 = 143$. En appliquant l'algorithme d'Euclide, il calcule $\gcd(91, 143) = 13$. Il retrouve immédiatement la clé secrète $p = 13$.
+
+En introduisant une perturbation, par exemple $x_1 = (13 \times 7) + 2 = 93$ et $x_2 = (13 \times 11) + 3 = 146$, l'attaque échoue car $\gcd(93, 146) = 1$. Le bruit casse la structure algébrique directe et assure l'indistinguabilité des textes chiffrés.
+\end{example}
+
+\section{Chiffrement Symétrique ("Somewhat Homomorphic")}
+
+\begin{definition}[Paramètres]
+Soit $\lambda$ le paramètre de sécurité.
+\begin{itemize}
+    \item $p$ : clé secrète, entier impair d'une taille de $\lambda^2$ bits.
+    \item $b \in \{0, 1\}$ : le bit de message.
+    \item $q$ : grand entier aléatoire ($\sim\lambda^5$ bits).
+    \item $r$ : petit entier aléatoire représentant le bruit ($\sim\lambda$ bits).
+\end{itemize}
+\end{definition}
+
+\begin{proposition}[Chiffrement et Déchiffrement]
+Le chiffrement de $b$ produit le texte chiffré $c$ suivant :
+$$c = q \cdot p + 2r + b$$ 
+L'extraction s'effectue avec la clé $p$ par :
+$$b = (c \bmod p) \bmod 2$$ 
+\end{proposition}
+
+\begin{proof}
+Puisque $p$ est beaucoup plus grand que $2r + b$, l'opération $c \bmod p$ supprime le multiple $q \cdot p$ et renvoie exactement $2r + b$. Ensuite, comme $b \in \{0, 1\}$ et que $2r$ est un nombre pair, $(2r + b) \bmod 2 = b$.
+\end{proof}
+
+\section{Chiffrement Asymétrique}
+
+\begin{definition}[Génération des clés]
+\begin{itemize}
+    \item \textbf{Clé secrète (sk)} : L'entier impair $p$.
+    \item \textbf{Clé publique (pk)} : Une suite de $\tau + 1$ entiers $( x_0, x_1, \dots, x_\tau )$. Chaque $x_i$ est un "presque multiple" public de $p$, généré via la formule $x_i = q_i \cdot p + 2r_i$.
+\end{itemize}
+La liste est réorganisée pour que $x_0$ soit le plus grand entier. De plus, $x_0$ doit être impair, et $x_0 \bmod p$ doit être un nombre pair.
+\end{definition}
+
+\begin{proposition}[Chiffrement]
+Pour chiffrer un bit $b$, on choisit un sous-ensemble aléatoire $S$ d'indices parmi la clé publique et un bruit aléatoire $r$. Le texte chiffré $c$ est calculé par :
+$$c = \left( b + 2r + \sum_{i \in S} x_i \right) \bmod x_0$$
+\end{proposition}
+
+\begin{proof}
+Par définition du modulo $x_0$, il existe $k \in \mathbb{Z}$ tel que :
+$$c = b + 2r + \sum_{i \in S} x_i + kx_0$$
+En remplaçant chaque $x_i$ par son expression $q_i \cdot p + 2r_i$ (y compris pour $x_0$), on obtient :
+$$c = b + 2r + \sum_{i \in S} \left(q_i \cdot p + 2r_i \right) + k(q_0 \cdot p +2r_0)$$
+En séparant les sommes et en regroupant par facteurs communs, on aboutit à :
+$$c = p\left(\sum_{i \in S}q_i + kq_0 \right) + 2 \left( r + \sum_{i \in S}r_i + kr_0 \right) + b $$
+On retrouve ainsi la structure d'un texte chiffré DGHV standard, ce qui justifie que $b = (c \bmod p) \bmod 2$.
+\end{proof}
+
+\section{Propriétés homomorphes et dynamique du bruit}
+
+\begin{proposition}[Évaluation]
+Soient $c_1 = p q_1 + 2r_1 + b_1$ et $c_2 = p q_2 + 2r_2 + b_2$ deux textes chiffrés.
+\begin{itemize}
+    \item $c_1 + c_2 = p(q_1 + q_2) + 2(r_1 + r_2) + (b_1 + b_2)$
+    \item $c_1 \cdot c_2 = p(q_1 q_2 p + \dots) + 2(2r_1 r_2 + r_1 b_2 + r_2 b_1) + b_1 b_2$
+\end{itemize}
+L'addition de textes chiffrés correspond à une porte XOR sur les clairs, et la multiplication à une porte AND.
+\end{proposition}
+
+\begin{definition}[Budget de bruit et Seuil critique]
+Chaque schéma de chiffrement homomorphe possède un budget de bruit. Le déchiffrement n'est correct que si la valeur absolue du bruit accumulé respecte le seuil critique :
+$$|2r + b| < \frac{p}{2}$$
+Si ce seuil est franchi, l'opération modulo $p$ (qui mathématiquement est un modulo centré ramenant les valeurs dans l'intervalle $]-p/2, p/2]$) va altérer la parité du résultat, rendant la récupération du bit impossible.
+\end{definition}
+
+\begin{example}[Déchiffrement correct vs Échec]
+Soit une clé secrète $p = 101$ (le seuil critique est donc $50.5$).
+\begin{itemize}
+    \item \textbf{Déchiffrement correct :} Chiffrons un bit $b = 1$ avec un bruit $2r = 10$. Le chiffré est $c = (2000 \times 101) + 10 + 1 = 202011$. 
+    On applique le modulo $p$ : $202011 \bmod 101 = 11$. Puis $11 \bmod 2 = 1$. Le bit est correctement retrouvé car $11 < 50.5$.
+    \item \textbf{Échec du déchiffrement :} Chiffrons un bit $b = 0$ et supposons qu'après plusieurs évaluations, le bruit ait explosé à $2r = 64$. Le chiffré est $c = (2000 \times 101) + 64 + 0 = 202064$.
+    Lors du déchiffrement, l'opération modulo centré donne $[202064]_{101} = 64 \equiv -37 \pmod{101}$ car $64 > 50.5$.
+    Ensuite, $-37 \bmod 2 = 1 \neq 0$. Le bit est corrompu, le déchiffrement a échoué.
+\end{itemize}
+\end{example}
+
+\begin{proposition}[Dynamique de la croissance du bruit]
+L'évaluation homomorphe consomme le budget de bruit, mais de manière très asymétrique :
+\begin{itemize}
+    \item \textbf{Croissance linéaire (Addition) :} Le bruit du chiffré somme est $r_{add} = r_1 + r_2$. Cette opération est peu coûteuse.
+    \item \textbf{Croissance explosive (Multiplication) :} Le produit $c_1 \cdot c_2$ génère un terme de bruit $R = 2(2r_1r_2 + r_1b_2 + r_2b_1) + b_1b_2$. Le nouveau bruit dominant est proportionnel à $r_1r_2$, ce qui double approximativement la taille du bruit en bits à chaque multiplication.
+\end{itemize}
+\end{proposition}
+
+\begin{definition}[Profondeur multiplicative]
+La profondeur multiplicative désigne le nombre maximal de multiplications successives qu'un circuit peut appliquer à un chiffré avant que son budget de bruit ne dépasse le seuil critique $p/2$. Cette limite distingue le chiffrement \textit{Somewhat Homomorphic} du chiffrement \textit{Fully Homomorphic}.
+\end{definition}
+
+\section{Le Bootstrapping}
+
+Pour devenir "Fully Homomorphic", on utilise le rafraîchissement de texte chiffré. Le circuit de déchiffrement standard $(c \bmod p)$ étant trop lourd mathématiquement, le DGHV utilise une clé publique augmentée d'un vecteur $\vec{y}$ de réels de haute précision. Le déchiffrement devient :
+$$b = (c^* - \lfloor \sum s_i z_i \rceil) \bmod 2$$
+Cette opération génère suffisamment peu de bruit intrinsèque pour rendre l'évaluation homomorphe du déchiffrement (bootstrapping) possible, réinitialisant ainsi le budget de bruit d'un chiffré.

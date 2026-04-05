@@ -1,0 +1,49 @@
+\chapter{Introduction}
+
+\section{Contexte historique et évolution}
+
+La confidentialité des données numériques repose traditionnellement sur un compromis binaire : la donnée est soit sécurisée (chiffrée et illisible), soit utile (en clair et traitable). Ce paradigme impose que toute manipulation de données sensibles nécessite une phase de déchiffrement, créant ainsi une faille de sécurité critique au moment même où l'information est traitée en mémoire vive. Le \textbf{Chiffrement Totalement Homomorphe} (FHE, pour \textit{Fully Homomorphic Encryption}) a été conçu pour briser cette dualité en permettant l'exécution d'algorithmes arbitraires directement sur des cryptogrammes.
+
+\subsection{Une quête de trente ans : des prémices à la rupture de Gentry}
+
+L'histoire du FHE débute en 1978, un an seulement après l'invention du RSA. Ronald Rivest, Leonard Adleman et Michael Dertouzos introduisent le concept de « \textit{privacy homomorphisms} ». Ils pressentent déjà l'immense potentiel d'un système où une opération sur les chiffrés correspondrait à une opération sur les clairs. Si certains schémas précoces présentaient des propriétés homomorphes partielles — comme le RSA (homomorphe pour la multiplication) ou le cryptosystème de Paillier en 1999 (homomorphe pour l'addition) — la capacité à combiner \textbf{simultanément} additions et multiplications est restée le « Saint Graal » de la cryptographie pendant trois décennies.
+
+Le verrou technologique saute en 2009 lorsque Craig Gentry, dans sa thèse de doctorat à l'Université de Stanford, publie le premier schéma totalement homomorphe. Sa percée repose sur une idée révolutionnaire : le \textit{bootstrapping}. Puisque chaque opération homomorphe augmente le bruit inhérent au chiffré jusqu'à rendre le déchiffrement impossible, Gentry propose de déchiffrer le texte chiffré \textit{sous sa forme chiffrée} pour réinitialiser ce bruit. Cette preuve d'existence a transformé un rêve théorique en une réalité mathématique, bien que les premiers temps d'exécution se comptaient alors en jours pour une simple opération.
+
+\subsection{De la théorie à l'efficience : vers une cryptographie multi-facettes}
+
+À la suite des travaux de Gentry, la recherche s'est orientée vers la réduction de la complexité algorithmique et la diversification des structures mathématiques sous-jacentes. On distingue alors plusieurs générations de schémas, passant des réseaux idéaux à des problèmes plus stables comme le \textit{Learning With Errors} (LWE). Ce mémoire se propose d'analyser cette évolution à travers trois protocoles emblématiques qui illustrent la maturité actuelle du domaine :
+
+\begin{itemize}
+    \item \textbf{Le schéma DGHV (2010) :} Proposé par van Dijk, Gentry, Halevi et Vaikuntanathan, il simplifie la construction de Gentry en remplaçant les réseaux complexes par l'arithmétique des entiers. L'étude de DGHV est pédagogiquement essentielle pour comprendre la gestion du bruit via le problème du diviseur commun approximatif (AGCD).
+    \item \textbf{Le schéma TFHE (2016) :} Représentant de la troisième génération, le \textit{Torus FHE} se distingue par son optimisation radicale du \textit{bootstrapping}. En travaillant sur le tore réel, il permet d'évaluer des portes logiques (NAND, XOR) en quelques millisecondes, ouvrant la voie à l'exécution de circuits booléens complexes et de microprocesseurs chiffrés.
+    \item \textbf{Le schéma CKKS (2017) :} Conçu par Cheon, Kim, Kim et Song, ce schéma marque un tournant pragmatique. Contrairement aux schémas exacts, CKKS traite le bruit comme une erreur d'arrondi inhérente au calcul en virgule flottante. Cette approche « approximative » le rend incomparablement plus efficace pour le \textit{Machine Learning} et le traitement de données statistiques à grande échelle.
+\end{itemize}
+
+L'enjeu de ce travail sera de démontrer comment ces constructions mathématiques, bien que radicalement différentes dans leurs approches, convergent vers un objectif commun : rendre le traitement de données privées aussi fluide et universel que le calcul en clair.
+
+\section{Outils théoriques et prérequis}
+
+Pour analyser les mécanismes du chiffrement homomorphe, il est nécessaire de définir le modèle de calcul sous-jacent. Les ordinateurs ne manipulent pas des fonctions mathématiques complexes de manière native, mais évaluent des réseaux de portes logiques traitant des données binaires.
+
+\subsection{Circuits booléens et portes logiques}
+
+En informatique théorique, un algorithme peut être modélisé sous la forme d'un circuit booléen, c'est-à-dire un graphe orienté acyclique composé de portes logiques élémentaires.
+
+\begin{definition}[Portes logiques sur $\mathbb{F}_2$]
+Une porte logique est une fonction mathématique opérant sur un ou plusieurs bits ($0$ ou $1$). Les deux opérations fondamentales pour le chiffrement homomorphe correspondent à l'arithmétique dans le corps fini $\mathbb{F}_2$ :
+\begin{itemize}
+    \item \textbf{La porte XOR (OU exclusif) :} Elle correspond strictement à l'addition modulo 2. Elle renvoie $1$ si et seulement si un seul des deux bits d'entrée vaut $1$.
+    \item \textbf{La porte AND (ET) :} Elle correspond strictement à la multiplication modulo 2. Elle renvoie $1$ si et seulement si les deux bits d'entrée valent $1$.
+\end{itemize}
+\end{definition}
+
+L'intérêt exclusif pour ces deux portes logiques dans l'étude des schémas de chiffrement repose sur un théorème fondamental de l'informatique théorique.
+
+\begin{proposition}[Universalité du sous-ensemble \{AND, XOR\}]
+L'ensemble de portes logiques \{AND, XOR\} est Turing-complet, sous réserve de disposer de la constante $1$ (permettant de simuler l'inversion logique NOT via $x \text{ XOR } 1$). Cela implique que toute fonction calculable, quelle que soit sa complexité, peut être traduite en un circuit combinatoire composé uniquement d'additions et de multiplications modulo 2.
+\end{proposition}
+
+\subsection{Lien avec le chiffrement homomorphe}
+
+Cette universalité définit le critère de succès d'un schéma \textit{Fully Homomorphic Encryption}. Si un protocole cryptographique parvient à simuler l'addition de deux textes chiffrés (équivalent à une porte XOR sur les clairs) et la multiplication de deux textes chiffrés (équivalent à une porte AND sur les clairs) sans destruction de l'information par le bruit, il devient alors théoriquement capable d'évaluer n'importe quel programme informatique à l'aveugle. L'enjeu des schémas DGHV, TFHE et CKKS réside dans les mécanismes mathématiques déployés pour atteindre cette capacité d'évaluation infinie.
