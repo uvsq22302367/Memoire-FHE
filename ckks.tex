@@ -1,0 +1,415 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[french]{babel}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{algorithm}
+\newcommand{\C}{\mathbb{C}}
+\usepackage{algpseudocode}
+
+\geometry{margin=2.5cm}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  citecolor=blue,
+  urlcolor=blue
+}
+
+\setlength{\parskip}{0.4em}
+\setlength{\parindent}{0pt}
+
+\newtheorem{definition}{Définition}[section]
+\newtheorem{proposition}{Proposition}[section]
+\newtheorem{remark}{Remarque}[section]
+\newtheorem{example}{Exemple}[section]
+
+\title{\textbf{CKKS}\\
+\large Cheon--Kim--Kim--Song}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Le schéma CKKS (\emph{Cheon--Kim--Kim--Song}) est un chiffrement homomorphe \emph{approximatif} conçu pour effectuer des calculs sur des nombres réels ou complexes chiffrés. Contrairement aux schémas exacts, il accepte une petite erreur de représentation et d'arrondi, ce qui le rend plus adapté aux applications où une précision flottante suffit, par exemple en apprentissage automatique ou en calcul scientifique privé.
+Ce document présente les idées mathématiques de base ainsi que le fonctionnement du schéma.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{Introduction}
+
+Les premiers schémas homomorphes ne permettaient que des opérations très limitées. CKKS, introduit par Cheon, Kim, Kim et Song, est particulièrement intéressant car il travaille avec des nombres \emph{approximatifs} au lieu d'exiger une exactitude parfaite \cite{CKKS2016}.
+
+L'intérêt principal de CKKS est qu'il permet de calculer sur des valeurs réelles ou complexes encodées sous forme de polynômes. En pratique, cela convient très bien à des domaines où l'on manipule déjà des données approchées : statistiques, filtrage, apprentissage automatique, calcul numérique, etc. Il y a cependant une petite erreur numérique toujours présente qui augmente au fil des opérations \cite{CKKS2016,CKKS2018Boot}.
+
+\section{Fondements mathématiques}
+
+\subsection{Anneaux de polynômes}
+
+Un polynôme est une expression de la forme
+\[
+p(X)=a_0+a_1X+\cdots+a_dX^d,
+\]
+où les coefficients $a_i$ appartiennent à un ensemble donné, par exemple $\mathbb{Z}$ ou $\mathbb{Z}_q$.
+
+Dans CKKS, on utilise un anneau du type
+\[
+R_q=\mathbb{Z}_q[X]/(X^N+1),
+\]
+où :
+\begin{itemize}[leftmargin=2em]
+  \item $N$ est généralement une puissance de $2$ ;
+  \item $\mathbb{Z}_q$ désigne les entiers modulo $q$ ;
+  \item l'écriture modulo $(X^N+1)$ signifie que deux polynômes sont considérés comme égaux dès que leur différence est multiple de $X^N+1$.
+\end{itemize}
+
+Dans cet anneau, on fait les calculs comme d'habitude sur les polynômes, puis on réduit le résultat modulo $X^N+1$ et modulo $q$.
+
+\begin{example}[Multiplication dans un anneau quotient]
+Prenons
+\[
+R_{17}=\mathbb{Z}_{17}[X]/(X^2+1).
+\]
+Calculons
+\[
+(3+5X)(7+4X).
+\]
+On développe :
+\[
+(3+5X)(7+4X)=21+12X+35X+20X^2=21+47X+20X^2.
+\]
+Dans l'anneau, on a $X^2\equiv -1$, donc
+\[
+20X^2\equiv -20 \equiv 14 \pmod{17}.
+\]
+Ainsi
+\[
+21+47X+20X^2 \equiv 21+47X+14 \equiv 1+13X \pmod{17}.
+\]
+On obtient donc
+\[
+(3+5X)(7+4X)\equiv 1+13X \pmod{X^2+1,\ 17}.
+\]
+\end{example}
+
+Cet exemple montre l'idée essentielle : le calcul se fait d'abord comme sur les polynômes ordinaires, puis on ramène le résultat dans une forme standard grâce aux réductions modulo.
+
+\subsection{Les idées de bruit, d'approximation et d'encodage}
+
+Dans CKKS, un message chiffré n'est pas stocké de manière exacte. Il est représenté avec un petit \emph{bruit} numérique ou algébrique, indispensable pour la sécurité.
+
+\begin{definition}[Encodage/Décodage]
+On appelle \emph{encodage} la transformation qui convertit un message numérique classique, généralement un vecteur de nombres réels ou complexes, en une représentation adaptée au schéma de chiffrement utilisé (CKKS). 
+
+Inversement, le \emph{décodage} est l'opération qui, à partir d'une donnée encodée, permet de retrouver une approximation du message original.
+\end{definition}
+
+\begin{definition}[Bruit]
+On appelle \emph{bruit} la petite erreur présente dans un chiffré et qui fait que le déchiffrement ne redonne pas directement la valeur encodée, mais une valeur très proche.
+\end{definition}
+
+Dans CKKS, on accepte ce bruit et on l'interprète comme une erreur d'approximation. L'idée est alors la suivante :
+\[
+\text{valeur exacte} \longrightarrow \text{valeur encodée} \longrightarrow \text{chiffré}
+\]
+puis, après calcul,
+\[
+\text{chiffré calculé} \longrightarrow \text{valeur décodée approximative}.
+\]
+
+Pour contrôler cette approximation, on introduit un \emph{facteur d'échelle} $\Delta$, souvent une grande puissance de $2$. Les nombres réels sont multipliés par $\Delta$ avant d'être arrondis à des entiers. À la fin, on divise par $\Delta$ pour revenir à l'échelle initiale.
+
+\section{L'encodage CKKS}
+
+\subsection{Des polynômes pour vectoriser}
+
+CKKS ne chiffre pas un seul nombre à la fois : il peut \emph{conditionner} plusieurs valeurs dans un seul chiffré. Dans la version classique, on peut stocker environ $N/2$ nombres complexes dans un chiffré basé sur l'anneau $R_q$ \cite{CKKS2016}.
+
+L'anneau des polynômes n'est pas vu seulement comme des coefficients, mais aussi comme des valeurs du polynôme en certaines racines de l'unité. On passe d'une représentation \emph{par coefficients} à une représentation \emph{par valeurs}.
+
+
+
+\subsection{Une écriture simplifiée de l'encodage}
+
+\begin{definition}[Encodage dans CKKS]
+CKKS encode un vecteur $\mathbf{z} = (z_1, \ldots, z_{n/2}) \in \C^{n/2}$
+en un polynôme $m(X) \in R$ tel que les évaluations de $m$ aux racines
+primitives $2n$-ièmes de l'unité approchent les composantes de $\mathbf{z}$.
+\end{definition}
+
+Si l'on note $\sigma$ l'application de d'encodage qui transforme un vecteur de nombres complexes en un polynôme qui approxime les valeurs de z aux racines
+primitives $2n$-ièmes de l'unité , alors l'encodage s'écrit schématiquement :
+\[
+\mathrm{Encodage}_\Delta(\mathbf{z})
+=
+\left\lfloor \Delta \cdot \sigma(\mathbf{z}) \right\rceil \in R,
+\]
+où :
+\begin{itemize}[leftmargin=2em]
+  \item $\mathbf{z}$ est un vecteur de nombres à chiffrer ;
+  \item $\Delta$ est l'échelle ;
+  \item $\lfloor \cdot \rceil$ désigne l'arrondi coefficient par coefficient ;
+  \item $R=\mathbb{Z}[X]/(X^N+1)$ est la version entière de l'anneau.
+\end{itemize}
+
+Concrètement, $\sigma$ est une interpolation polynomiale \emph{(proche d'une transformée de fourier discète)}.
+
+Le point important est le suivant : \emph{on encode avec un arrondi, donc on accepte une petite erreur dès le départ}. CKKS est donc, dès l'encodage, un schéma approximatif.
+
+\section{Description détaillée de CKKS}
+
+\subsection{Aperçu général}
+
+CKKS peut être vu comme un schéma à quatre grandes étapes :
+\begin{enumerate}[leftmargin=2em]
+  \item génération des clés ;
+  \item encodage et chiffrement ;
+  \item calcul homomorphe ;
+  \item déchiffrement et décodage.
+\end{enumerate}
+
+\begin{algorithm}[htbp]
+\caption{Version simplifiée de CKKS}
+\begin{algorithmic}[1]
+\State \textbf{Entrée :} un vecteur de nombres $\mathbf{z}$, une échelle $\Delta$
+\State Générer une paire de clés $(\text{pk},\text{sk})$
+\State Calculer $m \leftarrow \mathrm{Encodage}_\Delta(\mathbf{z})$
+\State Chiffrer $m$ pour obtenir $\mathbf{c}$ le message chiffré
+\State Effectuer des additions et multiplications homomorphes sur $\mathbf{c}$
+\State Si nécessaire, appliquer relinearisation, rescaling et bootstrapping
+\State Récupérer le résultat : $m^\star \leftarrow \operatorname{Dec}(\mathbf{c})$
+\State Retourner $\mathrm{Decode}(m^\star/\Delta)$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Génération des clés}
+
+On travaille dans un anneau $R_q=\mathbb{Z}_q[X]/(X^N+1)$.
+
+\begin{enumerate}[leftmargin=2em]
+  \item On choisit une clé secrète $s$ ``petite'', c'est-à-dire un polynôme de faible norme, souvent à coefficients dans $\{-1,0,1\}$.
+  \item On choisit un polynôme aléatoire $a$ dans $R_q$.
+  \item On choisit un petit bruit $e$.
+  \item On définit la clé publique par
+  \[
+  \text{pk}=(a,b),\qquad b=-a s + e \pmod q.
+  \]
+\end{enumerate}
+
+L'idée est que la paire $(a,b)$ cache $s$ à cause du bruit $e$. La sécurité repose sur la difficulté du problème RLWE \emph{(Ring Learning With Errors)}.
+
+\begin{remark}
+    Les coefficients des polynômes "petits" (e, s, ...) suivent une loi normale.
+\end{remark}
+
+\subsection{Encodage et chiffrement}
+
+Soit un message réel ou complexe $\mathbf{z}$. On commence par l'encoder :
+\[
+m=\mathrm{Encodage}_\Delta(\mathbf{z}).
+\]
+Le résultat $m$ est un polynôme à coefficients entiers, mais il représente approximativement les valeurs de $\mathbf{z}$.
+
+Pour chiffrer $m$ :
+
+\begin{enumerate}[leftmargin=2em]
+  \item on choisit un polynôme aléatoire $u$ très petit ;
+  \item on choisit deux bruits petits $e_1$ et $e_2$ ;
+  \item on calcule
+  \[
+  c_0 = b u + e_1 + m \pmod q,\qquad
+  c_1 = a u + e_2 \pmod q.
+  \]
+\end{enumerate}
+
+Le chiffré est alors le couple
+\[
+\mathbf{c}=(c_0,c_1)\in R_q^2.
+\]
+
+\subsection{Déchiffrement}
+
+En remplaçant $b$ par $-as+e$, on obtient :
+\[
+c_0 + c_1 s
+=
+(bu+e_1+m) + (au+e_2)s
+=
+eu - asu + e_1 + m + asu + e_2s
+=
+m + (e u + e_1 + e_2 s).
+\]
+Le terme entre parenthèses est petit. Donc, après déchiffrement, on retrouve $m$ à une petite erreur près.
+
+
+Il suffit ensuite de décoder ce polynôme pour retrouver un vecteur de nombres approchés.
+
+\subsection{Addition homomorphe}
+
+Si
+\[
+\mathbf{c}=(c_0,c_1)
+\quad\text{et}\quad
+\mathbf{d}=(d_0,d_1)
+\]
+sont deux chiffrés, alors leur somme est définie coefficient par coefficient :
+\[
+\mathbf{c}+\mathbf{d}=(c_0+d_0,\; c_1+d_1).
+\]
+En effet, lors du déchiffrement : 
+\[
+(c_0 + d_0) + (c_1 + d_1) \cdot s
+  = (c_0 + c_1 s) + (d_0 + d_1 s) \\
+  \approx m + m'
+\]
+
+Un point important est que l'addition n'augmente \emph{presque pas} le bruit du chiffrement. Elle effectue la somme des 2 bruits gardant l'erreur assez faible.
+
+\subsection{Multiplication homomorphe}
+
+La multiplication est plus délicate. On définit la mulitplication de deux chiffrés de taille 2 \emph{(multiplication de polynômes)} par :
+\[
+(c_0,c_1)\cdot(d_0,d_1)
+=
+\bigl(
+c_0d_0,\;
+c_0d_1+c_1d_0,\;
+c_1d_1
+\bigr) \coloneqq (x_0, x_1, x_2)
+\] 
+Pour déchiffrer, on effectue : 
+\[
+x_0 + x_1 s + x_2 s^2
+  = c_0d_0 + (c_0d_1+c_1d_0)s + c_1d_1s^2
+  = (c_0 + c_1 s)(d_0 + d_1 s) \\
+  \approx m \cdot m'.
+\]
+
+ce qui correspond bien au produit des messages. Mais le problème est que le degré du chiffré augmente \emph{(ici de 2 à 3)}.
+
+% \paragraph{Relinéarisation.}
+% Pour revenir à un chiffré de taille 2, on applique une étape appelée \emph{relinéarisation}. Cette opération utilise des clés supplémentaires, appelées \emph{clés d'évaluation}, pour transformer le terme en $s^2$ en un terme linéaire en $s$.
+
+\paragraph{Relinéarisation.}
+Après une multiplication homomorphe, on obtient un chiffré de la forme $(c_0, c_1, c_2)$ correspondant à :
+\[
+m \approx c_0 + c_1 s + c_2 s^2
+\]
+Le terme en $s^2$ empêche un déchiffrement direct classique.
+
+Pour résoudre ce problème, on utilise une \emph{clé de relinéarisation}, notée $(rk_0, rk_1)$, qui est un chiffrement de $s^2$ :
+\[
+rk_0 + rk_1 s \approx s^2
+\]
+
+On remplace alors :
+\[
+c_2 s^2 \approx c_2 (rk_0 + rk_1 s)
+\]
+
+Ainsi :
+\[
+m \approx (c_0 + c_2 rk_0) + (c_1 + c_2 rk_1)s
+\]
+
+On définit donc un nouveau chiffré :
+\[
+(c_0', c_1') = (c_0 + c_2 rk_0,\; c_1 + c_2 rk_1)
+\]
+
+Vérifiant : 
+\[
+c_0' + c_1' \cdot s \approx c_0 + c_1 s + c_2 s^2 \approx m
+\]
+
+Ce chiffré est de nouveau linéaire en $s$, ce qui permet de continuer les calculs homomorphes.
+
+\paragraph{Rescaling.}
+Dans CKKS, chaque message $m$ est encodé avec une échelle $\Delta$ pour convertir des nombres réels en entiers modulaires :
+\[
+\tilde{m} = \lfloor m \cdot \Delta \rceil
+\]
+
+Après une multiplication homomorphe :
+\[
+\tilde{m}_1 \cdot \tilde{m}_2 \approx m_1 m_2 \cdot \Delta^2
+\]
+L'échelle a donc doublé, ce qui peut provoquer saturation et perte de précision.
+
+Le \emph{rescaling} consiste à diviser le chiffré par $\Delta$ pour revenir à une échelle contrôlable :
+\[
+c_{\text{rescaled}} = \left\lfloor \frac{c}{\Delta} \right\rceil \approx m_1 m_2 \cdot \Delta
+\]
+
+Le rescaling permet de garder les valeurs numériques sous contrôle tout en conservant la précision relative.
+
+
+\section{Bootstrapping}
+
+\subsection{Le problème du bruit}
+
+Chaque opération homomorphe augmente le bruit. À terme, si le bruit devient trop grand, le déchiffrement échoue : le terme utile est dépassé par les erreurs.
+
+On ne peut donc effectuer qu'un nombre fini d'opérations avant de perdre la précision ou la validité du déchiffrement.
+
+\subsection{Principe du bootstrapping}
+
+Le \emph{bootstrapping} est une méthode de ``rafraîchissement'' des chiffrés. L'idée, héritée de Gentry, est de faire calculer par le système homomorphe une version approximative de sa propre fonction de déchiffrement, afin de produire un nouveau chiffré contenant moins de bruit \cite{Gentry2009IdealLattices,CKKS2018Boot}.
+
+Dans CKKS, cette étape est particulièrement subtile, car il faut :
+\begin{itemize}[leftmargin=2em]
+  \item gérer le bruit déjà présent ;
+  \item maintenir une bonne précision numérique ;
+  \item réajuster l'échelle ;
+  \item parfois utiliser des transformations de type FFT entre espace des coefficients et espace des slots.
+\end{itemize}
+
+Le bootstrapping permet donc d'enchaîner davantage d'opérations qu'un schéma purement limité, mais il reste coûteux.
+
+\section{Limites}
+
+\subsection{Précision approximative}
+
+CKKS ne donne pas un résultat exact. À la place, il fournit une approximation contrôlée. Cela convient à beaucoup d'applications, mais pas à toutes. Un problème exact n'est pas le bon cadre pour CKKS.
+
+\subsection{Coût computationnel}
+
+Par rapport à un calcul non chiffré, CKKS est très coûteux :
+\begin{itemize}[leftmargin=2em]
+  \item les polynômes sont de très grand degré ;
+  \item les modules ont des tailles importantes ;
+  \item les multiplications demandent des opérations de réécriture, de relinearisation et de rescaling ;
+  \item le bootstrapping est encore plus lourd.
+\end{itemize}
+
+Cependant, CKKS permet des calculs plus rapides que des méthodes de calculs homomorphes exactes (DGHV/TFHE) notamment grâce à ses calculs vectorisés.
+
+\subsection{Gestion du bruit}
+
+La gestion du bruit est le cœur pratique du schéma. Il faut choisir :
+\begin{itemize}[leftmargin=2em]
+  \item la taille de l'échelle $\Delta$ ;
+  \item le nombre de niveaux autorisés ;
+  \item la taille du module $q$ ;
+  \item les paramètres de sécurité ;
+  \item la stratégie de bootstrapping si elle est nécessaire.
+\end{itemize}
+
+Il existe donc un compromis permanent entre sécurité, précision et vitesse.
+
+\section{Conclusion}
+
+CKKS est aujourd'hui l'un des schémas homomorphes approximatifs les plus importants. Son originalité est d'accepter volontairement une petite erreur numérique afin de permettre des calculs efficaces sur des nombres réels ou complexes. Cette idée est très pertinente en pratique, notamment pour les calculs statistiques et l'apprentissage automatique privé.
+
+Du point de vue mathématique, CKKS repose sur l'arithmétique modulaire ainsi que les anneaux de polynômes. Du point de vue algorithmique, il introduit des opérations homomorphes bien structurées, mais qui nécessitent une gestion de l'échelle et du bruit.
+
+\newpage
+
+\end{document}
