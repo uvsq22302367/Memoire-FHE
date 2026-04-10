@@ -45,9 +45,9 @@ Ce document présente les idées mathématiques de base ainsi que le fonctionnem
 
 \section{Introduction}
 
-Les premiers schémas homomorphes ne permettaient que des opérations très limitées. CKKS, introduit par Cheon, Kim, Kim et Song, est particulièrement intéressant car il travaille avec des nombres \emph{approximatifs} au lieu d'exiger une exactitude parfaite \cite{CKKS2016}.
+Les premiers schémas homomorphes ne permettaient que des opérations très limitées. CKKS, introduit par Cheon, Kim, Kim et Song, est particulièrement intéressant car il travaille avec des nombres \emph{approximatifs} au lieu d'exiger une exactitude parfaite.
 
-L'intérêt principal de CKKS est qu'il permet de calculer sur des valeurs réelles ou complexes encodées sous forme de polynômes. En pratique, cela convient très bien à des domaines où l'on manipule déjà des données approchées : statistiques, filtrage, apprentissage automatique, calcul numérique, etc. Il y a cependant une petite erreur numérique toujours présente qui augmente au fil des opérations \cite{CKKS2016,CKKS2018Boot}.
+L'intérêt principal de CKKS est qu'il permet de calculer sur des valeurs réelles ou complexes encodées sous forme de polynômes. En pratique, cela convient très bien à des domaines où l'on manipule déjà des données approchées : statistiques, filtrage, apprentissage automatique, calcul numérique, etc. Il y a cependant une petite erreur numérique toujours présente qui augmente au fil des opérations.
 
 \section{Fondements mathématiques}
 
@@ -130,7 +130,7 @@ Pour contrôler cette approximation, on introduit un \emph{facteur d'échelle} $
 
 \subsection{Des polynômes pour vectoriser}
 
-CKKS ne chiffre pas un seul nombre à la fois : il peut \emph{conditionner} plusieurs valeurs dans un seul chiffré. Dans la version classique, on peut stocker environ $N/2$ nombres complexes dans un chiffré basé sur l'anneau $R_q$ \cite{CKKS2016}.
+CKKS ne chiffre pas un seul nombre à la fois : il peut \emph{conditionner} plusieurs valeurs dans un seul chiffré. Dans la version classique, on peut stocker environ $N/2$ nombres complexes dans un chiffré basé sur l'anneau $R_q$ .
 
 L'anneau des polynômes n'est pas vu seulement comme des coefficients, mais aussi comme des valeurs du polynôme en certaines racines de l'unité. On passe d'une représentation \emph{par coefficients} à une représentation \emph{par valeurs}.
 
@@ -361,7 +361,7 @@ On ne peut donc effectuer qu'un nombre fini d'opérations avant de perdre la pr�
 
 \subsection{Principe du bootstrapping}
 
-Le \emph{bootstrapping} est une méthode de ``rafraîchissement'' des chiffrés. L'idée, héritée de Gentry, est de faire calculer par le système homomorphe une version approximative de sa propre fonction de déchiffrement, afin de produire un nouveau chiffré contenant moins de bruit \cite{Gentry2009IdealLattices,CKKS2018Boot}.
+Le \emph{bootstrapping} est une méthode de ``rafraîchissement'' des chiffrés. L'idée, héritée de Gentry, est de faire calculer par le système homomorphe une version approximative de sa propre fonction de déchiffrement, afin de produire un nouveau chiffré contenant moins de bruit.
 
 Dans CKKS, cette étape est particulièrement subtile, car il faut :
 \begin{itemize}[leftmargin=2em]
@@ -409,6 +409,25 @@ Il existe donc un compromis permanent entre sécurité, précision et vitesse.
 CKKS est aujourd'hui l'un des schémas homomorphes approximatifs les plus importants. Son originalité est d'accepter volontairement une petite erreur numérique afin de permettre des calculs efficaces sur des nombres réels ou complexes. Cette idée est très pertinente en pratique, notamment pour les calculs statistiques et l'apprentissage automatique privé.
 
 Du point de vue mathématique, CKKS repose sur l'arithmétique modulaire ainsi que les anneaux de polynômes. Du point de vue algorithmique, il introduit des opérations homomorphes bien structurées, mais qui nécessitent une gestion de l'échelle et du bruit.
+
+\begin{thebibliography}{9}
+
+\bibitem{cheon2016ckks}
+Jung Hee Cheon, Andrey Kim, Miran Kim, and Yongsoo Song.
+\newblock Homomorphic Encryption for Arithmetic of Approximate Numbers, 2016.
+\newblock \url{https://eprint.iacr.org/2016/421}
+
+\bibitem{huynh_ckks_explained}
+Daniel Huynh.
+\newblock CKKS Explained: Part 1, Simple Encoding and Decoding, 2020.
+\newblock \url{https://openmined.org/blog/ckks-explained-part-1-simple-encoding-and-decoding/}
+
+\bibitem{tang_ckks_notes}
+Linus Tang.
+\newblock CKKS Homomorphic Encryption Part 1 --- The Original Scheme, 2024.
+\url{https://www.mit.edu/~linust/files/CKKS_Homomorphic_Encryption_Part_1.pdf}
+
+\end{thebibliography}
 
 \newpage
 
