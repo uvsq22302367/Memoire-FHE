@@ -13,6 +13,18 @@ L'intérêt principal de CKKS est qu'il permet de calculer sur des valeurs réel
 
 \subsection{Anneaux de polynômes}
 
+\begin{definition}
+Un \textbf{anneau} $(A, +, \cdot)$ est un ensemble $A$ muni de deux lois de composition interne telles que :
+\begin{itemize}
+    \item $(A, +)$ est un groupe abélien ;
+    \item la loi $\cdot$ est associative ;
+    \item la multiplication est distributive par rapport à l’addition, c’est-à-dire que pour tous $a,b,c \in A$ :
+    \[
+    a \cdot (b + c) = a \cdot b + a \cdot c \quad \text{et} \quad (a + b) \cdot c = a \cdot c + b \cdot c.
+    \]\\[-0.7cm]
+\end{itemize}
+\end{definition}
+
 Un polynôme est une expression de la forme
 \[
 p(X)=a_0+a_1X+\cdots+a_dX^d,
