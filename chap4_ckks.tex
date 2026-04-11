@@ -149,7 +149,7 @@ où :
   \item $R=\mathbb{Z}[X]/(X^N+1)$ est la version entière de l'anneau.
 \end{itemize}
 
-Concrètement, $\sigma$ est une interpolation polynomiale \emph{(proche d'une transformée de Fourier discrète)}.
+Concrètement, $\sigma$ est une interpolation polynomiale \emph{(trouvée à partir d'une transformée de Fourier discrète)}.
 
 Le point important est le suivant : \emph{on encode avec un arrondi, donc on accepte une petite erreur dès le départ}. CKKS est donc, dès l'encodage, un schéma approximatif.
 
@@ -353,7 +353,6 @@ Dans CKKS, cette étape est particulièrement subtile, car il faut :
   \item gérer le bruit déjà présent ;
   \item maintenir une bonne précision numérique ;
   \item réajuster l'échelle ;
-  \item parfois utiliser des transformations de type FFT entre espace des coefficients et espace des slots.
 \end{itemize}
 
 Le bootstrapping permet donc d'enchaîner davantage d'opérations qu'un schéma purement limité, mais il reste coûteux.
