@@ -31,7 +31,7 @@ Supposons qu’un attaquant intercepte deux chiffrés :
     x_1 = 91, \qquad x_2 = 143.
 \]
 Il calcule alors
-    $\gcd(91, 143) = 13,$
+    $\mathrm{pgcd}(91, 143) = 13,$
 et retrouve immédiatement la clé secrète $p = 13$.
 
 \medskip
@@ -44,7 +44,7 @@ Introduisons maintenant une perturbation :
     x_2 = 13 \times 11 + 3 = 146.
 \]
 Dans ce cas,
-    $\gcd(93, 146) = 1.$
+    $\mathrm{pgcd}(93, 146) = 1.$
 \\L’attaque échoue : le bruit détruit la structure algébrique exploitable et garantit l’indistinguabilité des chiffrés.
 \end{example}
 
@@ -98,6 +98,8 @@ On retrouve ainsi la structure d'un texte chiffré DGHV standard, ce qui justifi
 
 \section{Propriétés homomorphes et dynamique du bruit}
 
+\subsection{Évaluation des opérations}
+
 \begin{proposition}[Évaluation]
 Soient $c_1 = p q_1 + 2r_1 + b_1$ et $c_2 = p q_2 + 2r_2 + b_2$ deux textes chiffrés.
 \begin{itemize}
@@ -106,6 +108,8 @@ Soient $c_1 = p q_1 + 2r_1 + b_1$ et $c_2 = p q_2 + 2r_2 + b_2$ deux textes chif
 \end{itemize}
 L'addition de textes chiffrés correspond à une porte XOR sur les clairs, et la multiplication à une porte AND.
 \end{proposition}
+
+\subsection{Gestion du budget de bruit}
 
 \begin{definition}[Budget de bruit et Seuil critique]
 Chaque schéma de chiffrement homomorphe possède un budget de bruit. Le déchiffrement n'est correct que si la valeur absolue du bruit accumulé respecte le seuil critique :
@@ -119,24 +123,17 @@ Soit une clé secrète $p = 101$ (le seuil critique vaut donc $\frac{p}{2} = 50{
 \begin{itemize}
     \item \textbf{Déchiffrement correct.}  
     On chiffre un bit $b = 1$ avec un bruit $2r = 10$.  
-    Le chiffré vaut
-        $c = 2000 \times 101 + 10 + 1 = 202011.$
-
-    On calcule ensuite
-    
+    Le chiffré vaut $c = 2000 \times 101 + 10 + 1 = 202011.$
+    On calcule ensuite :
         \[ c \bmod p = 202011 \bmod 101 = 11, \quad \text{d'où } 11 \bmod 2 = 1. \]        
     Le bit est correctement retrouvé car $11 < 50{,}5$.
 
     \item \textbf{Échec du déchiffrement.}  
     On chiffre un bit $b = 0$ et, après plusieurs opérations, le bruit devient $2r = 64$.  
-    Le chiffré est alors
-        $c = 2000 \times 101 + 64 + 0 = 202064.$
-
-    Lors du déchiffrement, la réduction modulo centré donne
-        \[ [c]_{101} = 64 \equiv -37 \pmod{101}
-        \quad \text{car } 64 > 50{,}5. \]
-    Puis
-        \[ -37 \bmod 2 = 1 \neq 0. \]
+    Le chiffré est alors $c = 2000 \times 101 + 64 + 0 = 202064.$
+    Lors du déchiffrement, la réduction modulo centré donne :
+        \[ [c]_{101} = 64 \equiv -37 \pmod{101} \quad \text{car } 64 > 50{,}5. \]
+    Puis $-37 \bmod 2 = 1 \neq 0.$
     Le bit est donc corrompu : le déchiffrement échoue.
 \end{itemize}
 \end{example}
@@ -163,46 +160,43 @@ Pour devenir \textit{Fully Homomorphic} (totalement homomorphe) et permettre des
 
 L'idée de Craig Gentry (2009) est de rafraîchir un chiffré bruité en lui appliquant la fonction de déchiffrement de manière homomorphe.
 
-\begin{definition}[Le principe de l'auto-référence]
-Pour nettoyer un chiffré $c$ devenu trop bruité, le serveur effectue un calcul homomorphe qui simule l'opération de déchiffrement. Pour cela, l'utilisateur doit fournir au serveur une \textbf{clé de bootstrapping} : il s'agit de la clé secrète $sk$ elle-même chiffrée ($Enc_{pk}(sk)$).
+\begin{definition}[Principe de l'auto-référence]
+Le \textit{bootstrapping} consiste à rafraîchir un chiffré bruité en lui appliquant la fonction de déchiffrement de manière homomorphe. Pour cela, l'utilisateur doit fournir au serveur une \textbf{clé de bootstrapping} : il s'agit de la clé secrète $sk$ elle-même chiffrée ($Enc_{pk}(sk)$).
 \end{definition}
 
-Le serveur possède alors :
-\begin{itemize}
-    \item Un message $m$ enfermé dans un coffre très bruité ($c$).
-    \item La clé du coffre enfermée dans un autre coffre tout neuf ($Enc(sk)$).
-\end{itemize}
-
-En utilisant les propriétés homomorphes, le serveur utilise la « clé chiffrée » pour ouvrir le « coffre bruité » à l'intérieur d'un nouveau « coffre propre ». Le résultat est un nouveau chiffré du même message $m$, mais avec un bruit réinitialisé.
+\begin{remark}[Analogie du coffre-fort]
+Le serveur possède un message $m$ enfermé dans un coffre très bruité ($c$) et la clé du coffre enfermée dans un autre coffre tout neuf ($Enc(sk)$). En utilisant les propriétés homomorphes, le serveur utilise la « clé chiffrée » pour ouvrir le « coffre bruité » à l'intérieur d'un nouveau « coffre propre ». Le résultat est un nouveau chiffré du même message $m$, mais avec un bruit réinitialisé.
+\end{remark}
 
 \subsection{La technique du Squashing : Alléger le déchiffrement}
 
-Le principal obstacle au \textit{bootstrapping} dans le schéma DGHV est la complexité de la fonction de déchiffrement originale. En effet, pour retrouver le message, il faut calculer :
+\begin{problem}[Le goulot d'étranglement du déchiffrement]
+Le principal obstacle au \textit{bootstrapping} dans le schéma DGHV est la complexité de sa fonction de déchiffrement :
 \[ m = (c \bmod p) \bmod 2 \]
+Ce calcul nécessite une division euclidienne par la clé secrète $p$. Cette opération a une \textbf{profondeur multiplicative} beaucoup trop élevée : son évaluation homomorphe génère plus de bruit qu'elle n'en retire, rendant le \textit{bootstrapping} impossible en l'état.
+\end{problem}
 
-Ce calcul nécessite une division euclidienne par la clé secrète $p$, une opération dont la complexité multiplicative est trop élevée pour le budget de bruit du schéma. Pour résoudre ce problème, Craig Gentry a introduit le \textbf{squashing} (écrasement du circuit), qui consiste à simplifier la procédure de déchiffrement.
+Pour résoudre ce problème, Craig Gentry a introduit le \textbf{squashing} (écrasement du circuit), qui consiste à simplifier la procédure de déchiffrement en remplaçant la division euclidienne par une somme pondérée.
 
-\subsubsection{Principe : Remplacer la division par une somme}
-
-L'idée du \textit{squashing} est de pré-calculer une partie de la division « difficile » et de la fournir au serveur sous forme d'indices cachés. Le processus se décompose en trois étapes :
-
+\begin{definition}[Paramètres du Squashing]
+Pour alléger le déchiffrement, on pré-calcule une partie de la division et on la cache dans les clés :
 \begin{enumerate}
-    \item \textbf{La clé publique augmentée :} On génère un grand ensemble $\vec{y} = \{y_1, y_2, \dots, y_n\}$ de nombres rationnels compris entre $0$ et $2$. Cet ensemble est public.
-    \item \textbf{La clé secrète simplifiée (Vecteur creux) :} L'utilisateur définit un vecteur secret $\vec{s} = \{s_1, s_2, \dots, s_n\}$ composé de bits (0 ou 1). Ce vecteur est dit \textbf{très creux} (\textit{sparse}) car il ne contient qu'un très petit nombre d'éléments égaux à 1 (noté $\kappa$, où $\kappa \ll n$).
-    \item \textbf{Le secret partagé :} Ces éléments sont choisis de telle sorte que leur somme soit une approximation de l'inverse de la clé secrète :
-    \[ \sum_{i=1}^{n} s_i y_i \approx \frac{1}{p} \]
+    \item \textbf{La clé publique augmentée :} On ajoute à la clé publique un grand ensemble $\vec{y} = \{y_1, y_2, \dots, y_n\}$ de nombres rationnels publics compris entre $0$ et $2$.
+    \item \textbf{La clé secrète simplifiée (Vecteur creux) :} L'utilisateur définit un vecteur secret $\vec{s} = \{s_1, s_2, \dots, s_n\}$ composé de bits ($0$ ou $1$). Ce vecteur est dit \textbf{très creux} (\textit{sparse}) car il ne contient qu'un très petit nombre d'éléments égaux à $1$ (noté $\kappa$, où $\kappa \ll n$).
 \end{enumerate}
+Le secret partagé est construit de telle sorte que la somme des éléments sélectionnés par le vecteur creux soit une approximation de l'inverse de la clé secrète :
+\[ \sum_{i=1}^{n} s_i y_i \approx \frac{1}{p} \]
+\end{definition}
 
-\subsubsection{Nouveau circuit de déchiffrement}
-
-Grâce à cette préparation, le serveur ne calcule plus une division, mais une somme pondérée. Pour déchiffrer, le serveur calcule d'abord en clair les valeurs intermédiaires $z_i = (c \cdot y_i) \bmod 2$. Le déchiffrement devient alors :
-
+\begin{proposition}[Déchiffrement écrasé (\textit{Squashed Decryption})]
+Grâce à ces paramètres, le serveur ne calcule plus une division. Il calcule d'abord en clair les valeurs intermédiaires $z_i = (c \cdot y_i) \bmod 2$. Le déchiffrement devient alors une simple somme pondérée :
 \[ b = \left( c - \left\lfloor \sum_{i=1}^{n} s_i z_i \right\rceil \right) \bmod 2 \]
+\end{proposition}
 
-\subsubsection{Pourquoi cette méthode est-elle efficace ?}
-
-L'avantage majeur du \textit{squashing} réside dans la réduction du bruit généré lors de l'opération :
+\begin{remark}[Efficacité de la méthode]
+L'avantage majeur du \textit{squashing} réside dans la réduction drastique du bruit généré lors de l'opération :
 \begin{itemize}
-    \item \textbf{Faible complexité :} Puisque le vecteur $\vec{s}$ est très creux, la somme $\sum s_i z_i$ ne comporte en réalité que $\kappa$ termes (par exemple, 15 additions au lieu de 1000). 
-    \item \textbf{Compatibilité avec le bootstrapping :} Cette somme est suffisamment « légère » pour que le bruit créé par son calcul homomorphe reste inférieur au seuil critique $p/2$. 
+    \item \textbf{Faible complexité :} Puisque le vecteur $\vec{s}$ est très creux, la somme $\sum s_i z_i$ ne comporte en réalité que $\kappa$ termes (par exemple, $15$ additions au lieu de milliers d'opérations pour une division). 
+    \item \textbf{Compatibilité homomorphe :} Cette somme est suffisamment « légère » pour que le bruit créé reste inférieur au seuil critique $p/2$. Le \textit{bootstrapping} devient alors possible.
 \end{itemize}
+\end{remark}
