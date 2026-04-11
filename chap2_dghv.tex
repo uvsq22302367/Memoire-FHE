@@ -2,16 +2,50 @@
 
 \section{Le problème AGCD}
 
-La sécurité du schéma DGHV repose sur le problème du Plus Grand Commun Diviseur Approximatif (AGCD).
+\paragraph{Principe de sécurité.}
+La sécurité du schéma DGHV repose sur la difficulté du problème du \emph{Plus Grand Commun Diviseur Approximatif} (AGCD).
 
 \begin{problem}[AGCD]
-Soit un entier secret $p$. Si l'on fournit plusieurs multiples exacts $x_i = p \cdot q_i$, un simple calcul de PGCD permet de retrouver $p$. Cependant, si l'on ajoute une petite perturbation ou "bruit" $r_i$ à ces multiples ($x_i = p \cdot q_i + r_i$), retrouver $p$ devient extrêmement complexe. C'est ce principe qui masque la clé dans le DGHV.
+Soit un entier secret $p$. Si l’on fournit plusieurs multiples exacts
+\[
+    x_i = p \cdot q_i,
+\]
+alors un simple calcul de PGCD permet de retrouver $p$.
+
+En revanche, si l’on ajoute une petite perturbation (ou \emph{bruit}) $r_i$ :
+\[
+    x_i = p \cdot q_i + r_i,
+\]
+alors retrouver $p$ devient extrêmement difficile.  
+C’est précisément ce mécanisme qui permet de masquer la clé secrète dans le schéma DGHV.
 \end{problem}
 
-\begin{example}[Vulnérabilité sans bruit vs Protection]
-Le bruit n'est pas un défaut, mais un composant structurel indispensable. Supposons un scénario sans bruit où un attaquant intercepte deux chiffrés : $x_1 = 91$ et $x_2 = 143$. En appliquant l'algorithme d'Euclide, il calcule $\gcd(91, 143) = 13$. Il retrouve immédiatement la clé secrète $p = 13$.
+\begin{example}[Vulnérabilité sans bruit vs protection]
+Le bruit n’est pas un défaut, mais un élément structurel indispensable.
 
-En introduisant une perturbation, par exemple $x_1 = (13 \times 7) + 2 = 93$ et $x_2 = (13 \times 11) + 3 = 146$, l'attaque échoue car $\gcd(93, 146) = 1$. Le bruit casse la structure algébrique directe et assure l'indistinguabilité des textes chiffrés.
+\medskip
+
+\noindent\textbf{Sans bruit.}  
+Supposons qu’un attaquant intercepte deux chiffrés :
+\[
+    x_1 = 91, \qquad x_2 = 143.
+\]
+Il calcule alors
+    $\gcd(91, 143) = 13,$
+et retrouve immédiatement la clé secrète $p = 13$.
+
+\medskip
+
+\noindent\textbf{Avec bruit.}  
+Introduisons maintenant une perturbation :
+\[
+    x_1 = 13 \times 7 + 2 = 93, 
+    \qquad
+    x_2 = 13 \times 11 + 3 = 146.
+\]
+Dans ce cas,
+    $\gcd(93, 146) = 1.$
+\\L’attaque échoue : le bruit détruit la structure algébrique exploitable et garantit l’indistinguabilité des chiffrés.
 \end{example}
 
 \section{Chiffrement Symétrique ("Somewhat Homomorphic")}
@@ -79,14 +113,31 @@ $$|2r + b| < \frac{p}{2}$$
 Si ce seuil est franchi, l'opération modulo $p$ (qui mathématiquement est un modulo centré ramenant les valeurs dans l'intervalle $]-p/2, p/2]$) va altérer la parité du résultat, rendant la récupération du bit impossible.
 \end{definition}
 
-\begin{example}[Déchiffrement correct vs Échec]
-Soit une clé secrète $p = 101$ (le seuil critique est donc $50.5$).
+\begin{example}[Déchiffrement correct vs échec]
+Soit une clé secrète $p = 101$ (le seuil critique vaut donc $\frac{p}{2} = 50{,}5$).\\
+
 \begin{itemize}
-    \item \textbf{Déchiffrement correct :} Chiffrons un bit $b = 1$ avec un bruit $2r = 10$. Le chiffré est $c = (2000 \times 101) + 10 + 1 = 202011$. 
-    On applique le modulo $p$ : $202011 \bmod 101 = 11$. Puis $11 \bmod 2 = 1$. Le bit est correctement retrouvé car $11 < 50.5$.
-    \item \textbf{Échec du déchiffrement :} Chiffrons un bit $b = 0$ et supposons qu'après plusieurs évaluations, le bruit ait explosé à $2r = 64$. Le chiffré est $c = (2000 \times 101) + 64 + 0 = 202064$.
-    Lors du déchiffrement, l'opération modulo centré donne $[202064]_{101} = 64 \equiv -37 \pmod{101}$ car $64 > 50.5$.
-    Ensuite, $-37 \bmod 2 = 1 \neq 0$. Le bit est corrompu, le déchiffrement a échoué.
+    \item \textbf{Déchiffrement correct.}  
+    On chiffre un bit $b = 1$ avec un bruit $2r = 10$.  
+    Le chiffré vaut
+        $c = 2000 \times 101 + 10 + 1 = 202011.$
+
+    On calcule ensuite
+    
+        $$c \bmod p = 202011 \bmod 101 = 11, \quad \text{d'où } 11 \bmod 2 = 1.$$        
+    Le bit est correctement retrouvé car $11 < 50{,}5$.
+
+    \item \textbf{Échec du déchiffrement.}  
+    On chiffre un bit $b = 0$ et, après plusieurs opérations, le bruit devient $2r = 64$.  
+    Le chiffré est alors
+        $c = 2000 \times 101 + 64 + 0 = 202064.$
+
+    Lors du déchiffrement, la réduction modulo centré donne
+        $$[c]_{101} = 64 \equiv -37 \pmod{101}
+        \quad \text{car } 64 > 50{,}5.$$
+    Puis
+        $$-37 \bmod 2 = 1 \neq 0.$$
+    Le bit est donc corrompu : le déchiffrement échoue.
 \end{itemize}
 \end{example}
 
@@ -104,6 +155,57 @@ La profondeur multiplicative désigne le nombre maximal de multiplications succe
 
 \section{Le Bootstrapping}
 
-Pour devenir "Fully Homomorphic", on utilise le rafraîchissement de texte chiffré. Le circuit de déchiffrement standard $(c \bmod p)$ étant trop lourd mathématiquement, le DGHV utilise une clé publique augmentée d'un vecteur $\vec{y}$ de réels de haute précision. Le déchiffrement devient :
-$$b = (c^* - \lfloor \sum s_i z_i \rceil) \bmod 2$$
-Cette opération génère suffisamment peu de bruit intrinsèque pour rendre l'évaluation homomorphe du déchiffrement (bootstrapping) possible, réinitialisant ainsi le budget de bruit d'un chiffré.
+Jusqu'ici, nous avons vu que le schéma DGHV est limité : chaque opération consomme du « budget de bruit ». Une fois ce budget épuisé, le message est perdu. Un tel schéma est dit \textit{Somewhat Homomorphic} (partiellement homomorphe). 
+
+Pour devenir \textit{Fully Homomorphic} (totalement homomorphe) et permettre des calculs infinis, il faut pouvoir « nettoyer » le bruit d'un chiffré avant qu'il ne dépasse le seuil critique. C'est le rôle du \textbf{bootstrapping}.
+
+\subsection{Le concept de Bootstrapping : « Déchiffrer sans voir »}
+
+L'idée de Craig Gentry (2009) est de rafraîchir un chiffré bruité en lui appliquant la fonction de déchiffrement de manière homomorphe.
+
+\begin{definition}[Le principe de l'auto-référence]
+Pour nettoyer un chiffré $c$ devenu trop bruité, le serveur effectue un calcul homomorphe qui simule l'opération de déchiffrement. Pour cela, l'utilisateur doit fournir au serveur une \textbf{clé de bootstrapping} : il s'agit de la clé secrète $sk$ elle-même chiffrée ($Enc_{pk}(sk)$).
+\end{definition}
+
+Le serveur possède alors :
+\begin{itemize}
+    \item Un message $m$ enfermé dans un coffre très bruité ($c$).
+    \item La clé du coffre enfermée dans un autre coffre tout neuf ($Enc(sk)$).
+\end{itemize}
+
+En utilisant les propriétés homomorphes, le serveur utilise la « clé chiffrée » pour ouvrir le « coffre bruité » à l'intérieur d'un nouveau « coffre propre ». Le résultat est un nouveau chiffré du même message $m$, mais avec un bruit réinitialisé.
+
+\subsection{La technique du Squashing : Alléger le déchiffrement}
+
+Le principal obstacle au \textit{bootstrapping} dans le schéma DGHV est la complexité de la fonction de déchiffrement originale. En effet, pour retrouver le message, il faut calculer :
+\[ m = (c \pmod p) \pmod 2 \]
+
+Ce calcul nécessite une division euclidienne par la clé secrète $p$, une opération dont la complexité multiplicative est trop élevée pour le budget de bruit du schéma. Pour résoudre ce problème, Craig Gentry a introduit le \textbf{squashing} (écrasement du circuit), qui consiste à simplifier la procédure de déchiffrement.
+
+\subsubsection{Principe : Remplacer la division par une somme}
+
+L'idée du \textit{squashing} est de pré-calculer une partie de la division "difficile" et de la fournir au serveur sous forme d'indices cachés. Le processus se décompose en trois étapes :
+
+\begin{enumerate}
+    \item \textbf{La clé publique augmentée :} On génère un grand ensemble $\vec{y} = \{y_1, y_2, \dots, y_n\}$ de nombres rationnels compris entre $0$ et $2$. Cet ensemble est public.
+    \item \textbf{La clé secrète simplifiée (Vecteur creux) :} L'utilisateur définit un vecteur secret $\vec{s} = \{s_1, s_2, \dots, s_n\}$ composé de bits (0 ou 1). Ce vecteur est dit \textbf{très creux} (\textit{sparse}) car il ne contient qu'un très petit nombre d'éléments égaux à 1 (noté $\kappa$, où $\kappa \ll n$).
+    \item \textbf{Le secret partagé :} Ces éléments sont choisis de telle sorte que leur somme soit une approximation de l'inverse de la clé secrète :
+    \[ \sum_{i=1}^{n} s_i y_i \approx \frac{1}{p} \pmod 2 \]
+\end{enumerate}
+
+\subsubsection{Nouveau circuit de déchiffrement}
+
+Grâce à cette préparation, le serveur ne calcule plus une division, mais une somme pondérée. Pour déchiffrer, le serveur calcule d'abord en clair les valeurs intermédiaires $z_i = (c \cdot y_i) \pmod 2$. Le déchiffrement devient alors :
+
+\[ b = \left( c - \left\lfloor \sum_{i=1}^{n} s_i z_i \right\rceil \right) \pmod 2 \]
+
+
+
+\subsubsection{Pourquoi cette méthode est-elle efficace ?}
+
+L'avantage majeur du \textit{squashing} réside dans la réduction du bruit généré lors de l'opération :
+\begin{itemize}
+    \item \textbf{Faible complexité :} Puisque le vecteur $\vec{s}$ est très creux, la somme $\sum s_i z_i$ ne comporte en réalité que $\kappa$ termes (par exemple, 15 additions au lieu de 1000). 
+    \item \textbf{Compatibilité avec le bootstrapping :} Cette somme est suffisamment "légère" pour que le bruit créé par son calcul homomorphe reste inférieur au seuil critique $p/2$. 
+\end{itemize}
+
