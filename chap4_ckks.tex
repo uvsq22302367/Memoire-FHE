@@ -108,6 +108,27 @@ L'anneau des polynômes n'est pas vu seulement comme des coefficients, mais auss
 
 \subsection{Une écriture simplifiée de l'encodage}
 
+\begin{definition}[Racine primitive 2n-ième de l'unité]
+Soit $n \in \mathbb{N}^*$ et posons
+\[
+\omega = \exp\left(\frac{i\pi}{n}\right).
+\]
+Alors $\omega$ est une racine $2n$-ième de l’unité, et l’ensemble des racines $2n$-ièmes de l’unité est donné par
+\[
+\{ \omega^k \mid k \in \{0,\dots,2n-1\} \}.
+\]
+
+Une racine $\zeta$ est dite \textbf{primitive $2n$-ième de l’unité} si son ordre est exactement $2n$, c’est-à-dire si
+\[
+\zeta^{2n} = 1 \quad \text{et} \quad \forall k \in \{1,\dots,2n-1\},\ \zeta^k \neq 1.
+\]
+
+Dans ce cas, les racines primitives $2n$-ièmes de l’unité sont exactement les puissances $\omega^k$ avec $k$ premier avec $2n$. En particulier, lorsque l’on considère $\omega = \exp\left(\frac{i\pi}{n}\right)$, ce sont précisément les $\omega^k$ avec $k$ impair :
+\[
+\{ \omega^k \mid 1 \leq k \leq 2n-1,\ k \text{ impair} \}.
+\]
+\end{definition}
+
 \begin{definition}[Encodage dans CKKS]
 CKKS encode un vecteur $\mathbf{z} = (z_1, \ldots, z_{n/2}) \in \mathbb{C}^{n/2}$
 en un polynôme $m(X) \in R$ tel que les évaluations de $m$ aux racines
