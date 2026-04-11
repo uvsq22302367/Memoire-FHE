@@ -48,7 +48,7 @@ Dans ce cas,
 \\L’attaque échoue : le bruit détruit la structure algébrique exploitable et garantit l’indistinguabilité des chiffrés.
 \end{example}
 
-\section{Chiffrement Symétrique ("Somewhat Homomorphic")}
+\section{Chiffrement Symétrique (« Somewhat Homomorphic »)}
 
 \begin{definition}[Paramètres]
 Soit $\lambda$ le paramètre de sécurité.
@@ -62,9 +62,9 @@ Soit $\lambda$ le paramètre de sécurité.
 
 \begin{proposition}[Chiffrement et Déchiffrement]
 Le chiffrement de $b$ produit le texte chiffré $c$ suivant :
-$$c = q \cdot p + 2r + b$$ 
+\[ c = q \cdot p + 2r + b \] 
 L'extraction s'effectue avec la clé $p$ par :
-$$b = (c \bmod p) \bmod 2$$ 
+\[ b = (c \bmod p) \bmod 2 \] 
 \end{proposition}
 
 \begin{proof}
@@ -76,23 +76,23 @@ Puisque $p$ est beaucoup plus grand que $2r + b$, l'opération $c \bmod p$ suppr
 \begin{definition}[Génération des clés]
 \begin{itemize}
     \item \textbf{Clé secrète (sk)} : L'entier impair $p$.
-    \item \textbf{Clé publique (pk)} : Une suite de $\tau + 1$ entiers $( x_0, x_1, \dots, x_\tau )$. Chaque $x_i$ est un "presque multiple" public de $p$, généré via la formule $x_i = q_i \cdot p + 2r_i$.
+    \item \textbf{Clé publique (pk)} : Une suite de $\tau + 1$ entiers $( x_0, x_1, \dots, x_\tau )$. Chaque $x_i$ est un « presque multiple » public de $p$, généré via la formule $x_i = q_i \cdot p + 2r_i$.
 \end{itemize}
 La liste est réorganisée pour que $x_0$ soit le plus grand entier. De plus, $x_0$ doit être impair, et $x_0 \bmod p$ doit être un nombre pair.
 \end{definition}
 
 \begin{proposition}[Chiffrement]
 Pour chiffrer un bit $b$, on choisit un sous-ensemble aléatoire $S$ d'indices parmi la clé publique et un bruit aléatoire $r$. Le texte chiffré $c$ est calculé par :
-$$c = \left( b + 2r + \sum_{i \in S} x_i \right) \bmod x_0$$
+\[ c = \left( b + 2r + \sum_{i \in S} x_i \right) \bmod x_0 \]
 \end{proposition}
 
 \begin{proof}
 Par définition du modulo $x_0$, il existe $k \in \mathbb{Z}$ tel que :
-$$c = b + 2r + \sum_{i \in S} x_i + kx_0$$
+\[ c = b + 2r + \sum_{i \in S} x_i + kx_0 \]
 En remplaçant chaque $x_i$ par son expression $q_i \cdot p + 2r_i$ (y compris pour $x_0$), on obtient :
-$$c = b + 2r + \sum_{i \in S} \left(q_i \cdot p + 2r_i \right) + k(q_0 \cdot p +2r_0)$$
+\[ c = b + 2r + \sum_{i \in S} \left(q_i \cdot p + 2r_i \right) + k(q_0 \cdot p +2r_0) \]
 En séparant les sommes et en regroupant par facteurs communs, on aboutit à :
-$$c = p\left(\sum_{i \in S}q_i + kq_0 \right) + 2 \left( r + \sum_{i \in S}r_i + kr_0 \right) + b $$
+\[ c = p\left(\sum_{i \in S}q_i + kq_0 \right) + 2 \left( r + \sum_{i \in S}r_i + kr_0 \right) + b \]
 On retrouve ainsi la structure d'un texte chiffré DGHV standard, ce qui justifie que $b = (c \bmod p) \bmod 2$.
 \end{proof}
 
@@ -109,7 +109,7 @@ L'addition de textes chiffrés correspond à une porte XOR sur les clairs, et la
 
 \begin{definition}[Budget de bruit et Seuil critique]
 Chaque schéma de chiffrement homomorphe possède un budget de bruit. Le déchiffrement n'est correct que si la valeur absolue du bruit accumulé respecte le seuil critique :
-$$|2r + b| < \frac{p}{2}$$
+\[ |2r + b| < \frac{p}{2} \]
 Si ce seuil est franchi, l'opération modulo $p$ (qui mathématiquement est un modulo centré ramenant les valeurs dans l'intervalle $]-p/2, p/2]$) va altérer la parité du résultat, rendant la récupération du bit impossible.
 \end{definition}
 
@@ -124,7 +124,7 @@ Soit une clé secrète $p = 101$ (le seuil critique vaut donc $\frac{p}{2} = 50{
 
     On calcule ensuite
     
-        $$c \bmod p = 202011 \bmod 101 = 11, \quad \text{d'où } 11 \bmod 2 = 1.$$        
+        \[ c \bmod p = 202011 \bmod 101 = 11, \quad \text{d'où } 11 \bmod 2 = 1. \]        
     Le bit est correctement retrouvé car $11 < 50{,}5$.
 
     \item \textbf{Échec du déchiffrement.}  
@@ -133,10 +133,10 @@ Soit une clé secrète $p = 101$ (le seuil critique vaut donc $\frac{p}{2} = 50{
         $c = 2000 \times 101 + 64 + 0 = 202064.$
 
     Lors du déchiffrement, la réduction modulo centré donne
-        $$[c]_{101} = 64 \equiv -37 \pmod{101}
-        \quad \text{car } 64 > 50{,}5.$$
+        \[ [c]_{101} = 64 \equiv -37 \pmod{101}
+        \quad \text{car } 64 > 50{,}5. \]
     Puis
-        $$-37 \bmod 2 = 1 \neq 0.$$
+        \[ -37 \bmod 2 = 1 \neq 0. \]
     Le bit est donc corrompu : le déchiffrement échoue.
 \end{itemize}
 \end{example}
@@ -178,34 +178,31 @@ En utilisant les propriétés homomorphes, le serveur utilise la « clé chiffr�
 \subsection{La technique du Squashing : Alléger le déchiffrement}
 
 Le principal obstacle au \textit{bootstrapping} dans le schéma DGHV est la complexité de la fonction de déchiffrement originale. En effet, pour retrouver le message, il faut calculer :
-\[ m = (c \pmod p) \pmod 2 \]
+\[ m = (c \bmod p) \bmod 2 \]
 
 Ce calcul nécessite une division euclidienne par la clé secrète $p$, une opération dont la complexité multiplicative est trop élevée pour le budget de bruit du schéma. Pour résoudre ce problème, Craig Gentry a introduit le \textbf{squashing} (écrasement du circuit), qui consiste à simplifier la procédure de déchiffrement.
 
 \subsubsection{Principe : Remplacer la division par une somme}
 
-L'idée du \textit{squashing} est de pré-calculer une partie de la division "difficile" et de la fournir au serveur sous forme d'indices cachés. Le processus se décompose en trois étapes :
+L'idée du \textit{squashing} est de pré-calculer une partie de la division « difficile » et de la fournir au serveur sous forme d'indices cachés. Le processus se décompose en trois étapes :
 
 \begin{enumerate}
     \item \textbf{La clé publique augmentée :} On génère un grand ensemble $\vec{y} = \{y_1, y_2, \dots, y_n\}$ de nombres rationnels compris entre $0$ et $2$. Cet ensemble est public.
     \item \textbf{La clé secrète simplifiée (Vecteur creux) :} L'utilisateur définit un vecteur secret $\vec{s} = \{s_1, s_2, \dots, s_n\}$ composé de bits (0 ou 1). Ce vecteur est dit \textbf{très creux} (\textit{sparse}) car il ne contient qu'un très petit nombre d'éléments égaux à 1 (noté $\kappa$, où $\kappa \ll n$).
     \item \textbf{Le secret partagé :} Ces éléments sont choisis de telle sorte que leur somme soit une approximation de l'inverse de la clé secrète :
-    \[ \sum_{i=1}^{n} s_i y_i \approx \frac{1}{p} \pmod 2 \]
+    \[ \sum_{i=1}^{n} s_i y_i \approx \frac{1}{p} \]
 \end{enumerate}
 
 \subsubsection{Nouveau circuit de déchiffrement}
 
-Grâce à cette préparation, le serveur ne calcule plus une division, mais une somme pondérée. Pour déchiffrer, le serveur calcule d'abord en clair les valeurs intermédiaires $z_i = (c \cdot y_i) \pmod 2$. Le déchiffrement devient alors :
+Grâce à cette préparation, le serveur ne calcule plus une division, mais une somme pondérée. Pour déchiffrer, le serveur calcule d'abord en clair les valeurs intermédiaires $z_i = (c \cdot y_i) \bmod 2$. Le déchiffrement devient alors :
 
-\[ b = \left( c - \left\lfloor \sum_{i=1}^{n} s_i z_i \right\rceil \right) \pmod 2 \]
-
-
+\[ b = \left( c - \left\lfloor \sum_{i=1}^{n} s_i z_i \right\rceil \right) \bmod 2 \]
 
 \subsubsection{Pourquoi cette méthode est-elle efficace ?}
 
 L'avantage majeur du \textit{squashing} réside dans la réduction du bruit généré lors de l'opération :
 \begin{itemize}
     \item \textbf{Faible complexité :} Puisque le vecteur $\vec{s}$ est très creux, la somme $\sum s_i z_i$ ne comporte en réalité que $\kappa$ termes (par exemple, 15 additions au lieu de 1000). 
-    \item \textbf{Compatibilité avec le bootstrapping :} Cette somme est suffisamment "légère" pour que le bruit créé par son calcul homomorphe reste inférieur au seuil critique $p/2$. 
+    \item \textbf{Compatibilité avec le bootstrapping :} Cette somme est suffisamment « légère » pour que le bruit créé par son calcul homomorphe reste inférieur au seuil critique $p/2$. 
 \end{itemize}
-
