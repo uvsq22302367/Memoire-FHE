@@ -1,13 +1,6 @@
 \chapter{CKKS : Calcul sur les nombres réels}
 
-Le schéma CKKS (\emph{Cheon--Kim--Kim--Song}) est un chiffrement homomorphe \emph{approximatif} conçu pour effectuer des calculs sur des nombres réels ou complexes chiffrés. Contrairement aux schémas exacts, il accepte une petite erreur de représentation et d'arrondi, ce qui le rend plus adapté aux applications où une précision flottante suffit, par exemple en apprentissage automatique ou en calcul scientifique privé.
-Ce chapitre présente les idées mathématiques de base ainsi que le fonctionnement du schéma.
-
-\section{Introduction}
-
-Les premiers schémas homomorphes ne permettaient que des opérations très limitées. CKKS, introduit par Cheon, Kim, Kim et Song \cite{CKKS17}, est particulièrement intéressant car il travaille avec des nombres \emph{approximatifs} au lieu d'exiger une exactitude parfaite.
-
-L'intérêt principal de CKKS est qu'il permet de calculer sur des valeurs réelles ou complexes encodées sous forme de polynômes. En pratique, cela convient très bien à des domaines où l'on manipule déjà des données approchées : statistiques, filtrage, apprentissage automatique, calcul numérique, etc. Il y a cependant une petite erreur numérique toujours présente qui augmente au fil des opérations.
+Le schéma CKKS (\emph{Cheon--Kim--Kim--Song}) est un chiffrement homomorphe \emph{approximatif} conçu pour effectuer des calculs sur des nombres réels ou complexes chiffrés. Contrairement aux schémas exacts, il accepte une petite erreur de représentation et d'arrondi, ce qui le rend plus adapté aux applications où une précision flottante suffit.
 
 \section{Fondements mathématiques}
 
@@ -336,27 +329,6 @@ c_{\text{rescaled}} = \left\lfloor \frac{c}{\Delta} \right\rceil \approx m_1 m_2
 
 Le rescaling permet de garder les valeurs numériques sous contrôle tout en conservant la précision relative.
 
-\section{Bootstrapping}
-
-\subsection{Le problème du bruit}
-
-Chaque opération homomorphe augmente le bruit. À terme, si le bruit devient trop grand, le déchiffrement échoue : le terme utile est dépassé par les erreurs.
-
-On ne peut donc effectuer qu'un nombre fini d'opérations avant de perdre la précision ou la validité du déchiffrement.
-
-\subsection{Principe du bootstrapping}
-
-Le \emph{bootstrapping} est une méthode de ``rafraîchissement'' des chiffrés. L'idée, héritée de Gentry, est de faire calculer par le système homomorphe une version approximative de sa propre fonction de déchiffrement, afin de produire un nouveau chiffré contenant moins de bruit.
-
-Dans CKKS, cette étape est particulièrement subtile, car il faut :
-\begin{itemize}[leftmargin=2em]
-  \item gérer le bruit déjà présent ;
-  \item maintenir une bonne précision numérique ;
-  \item réajuster l'échelle ;
-\end{itemize}
-
-Le bootstrapping permet donc d'enchaîner davantage d'opérations qu'un schéma purement limité, mais il reste coûteux.
-
 \section{Limites}
 
 \subsection{Précision approximative}
@@ -370,26 +342,18 @@ Par rapport à un calcul non chiffré, CKKS est très coûteux :
   \item les polynômes sont de très grand degré ;
   \item les modules ont des tailles importantes ;
   \item les multiplications demandent des opérations de réécriture, de relinéarisation et de rescaling ;
-  \item le bootstrapping est encore plus lourd.
+  \item le bootstrapping si appliqué est encore plus lourd.
 \end{itemize}
 
 Cependant, CKKS permet des calculs plus rapides que des méthodes de calculs homomorphes exactes (DGHV/TFHE) notamment grâce à ses calculs vectorisés.
 
 \subsection{Gestion du bruit}
-
-La gestion du bruit est le cœur pratique du schéma. Il faut choisir :
+Le bruit augmente après chaque calcul homomorphe \emph{(notamment lors de multiplications)}.
+La gestion du bruit est donc un problème au cœur pratique du schéma. Il faut choisir :
 \begin{itemize}[leftmargin=2em]
   \item la taille de l'échelle $\Delta$ ;
-  \item le nombre de niveaux autorisés ;
   \item la taille du module $q$ ;
-  \item les paramètres de sécurité ;
-  \item la stratégie de bootstrapping si elle est nécessaire.
+  \item Une stratégie de bootstrapping \emph{(afin de réduire le bruit entre certains calculs homomorphes)} si elle est nécessaire.
 \end{itemize}
 
 Il existe donc un compromis permanent entre sécurité, précision et vitesse.
-
-\section{Conclusion}
-
-CKKS est aujourd'hui l'un des schémas homomorphes approximatifs les plus importants. Son originalité est d'accepter volontairement une petite erreur numérique afin de permettre des calculs efficaces sur des nombres réels ou complexes. Cette idée est très pertinente en pratique, notamment pour les calculs statistiques et l'apprentissage automatique privé.
-
-Du point de vue mathématique, CKKS repose sur l'arithmétique modulaire ainsi que les anneaux de polynômes. Du point de vue algorithmique, il introduit des opérations homomorphes bien structurées, mais qui nécessitent une gestion de l'échelle et du bruit.
