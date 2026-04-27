@@ -1,16 +1,17 @@
 {
-    "name": "Environnement LaTeX",
-    "image": "qmcgaw/latexdevcontainer:latest-full",
-    "customizations": {
-        "vscode": {
-            "extensions": [
-                "james-yu.latex-workshop",
-                "valentjn.vscode-ltex" 
-            ],
-            "settings": {
-                "latex-workshop.latex.autoBuild.run": "onFileChange",
-                "latex-workshop.latex.recipe.default": "latexmk (lualatex)"
-            }
-        }
-    }
+	"name": "LaTeX Codespace",
+	"image": "sanjibsen/weblatex:latest",
+	"remoteUser": "root",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"james-yu.latex-workshop",
+                "valentjn.vscode-ltex"
+			],
+			"settings": {
+				"latex-workshop.latex.autoBuild.run": "onFileChange",
+				"latex-workshop.view.pdf.viewer": "tab"
+			}
+		}
+	}
 }
