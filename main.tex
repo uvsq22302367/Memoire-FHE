@@ -6,6 +6,7 @@
 \usepackage[french]{babel}
 \usepackage[a4paper, margin=2.5cm]{geometry}
 \usepackage{csquotes}
+\usepackage{graphicx} % AJOUT : Pour insérer des images/logos
 
 % --- MATHÉMATIQUES ---
 \usepackage{amsmath, amssymb, amsfonts, amsthm}
@@ -13,9 +14,9 @@
 \usepackage{stmaryrd} 
 
 % --- PACKAGES AJOUTÉS POUR LE CHAPITRE CKKS ---
-\usepackage{enumitem} % Pour personnaliser les listes (leftmargin)
-\usepackage{algorithm} % Pour l'environnement flottant d'algorithme
-\usepackage{algpseudocode} % Pour écrire le pseudo-code de CKKS
+\usepackage{enumitem}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
 
 % --- CONFIGURATION DES ENVIRONNEMENTS ---
 \theoremstyle{plain}
@@ -37,13 +38,48 @@
 \addbibresource{bibliographie.bib} 
 \usepackage[colorlinks=true, allcolors=blue]{hyperref}
 
-\title{Étude du Chiffrement Totalement Homomorphe :\\ De DGHV à TFHE et CKKS}
-\author{Constantin Delahodde, Martin Chedozeau, Lucas Schaeffer}
-\date{Année Universitaire 2025-2026}
-
 \begin{document}
 
-\maketitle
+% ==========================================
+%               PAGE DE GARDE
+% ==========================================
+\begin{titlepage}
+    \centering
+    
+    % Logo de l'université
+    \includegraphics[width=0.9\textwidth]{uvsq_logo.jpg}\par\vspace{1cm}
+    
+    {\scshape\Large Université de Versailles Saint-Quentin\par}
+    \vspace{0.5cm}
+    {\large Licence Double Diplôme Mathématiques - Physique\par}
+    
+    \vspace{2cm}
+    
+    % Titre principal
+    \rule{\linewidth}{0.5mm} \\[0.4cm]
+    {\huge\bfseries Étude du Chiffrement\\ Totalement Homomorphe \par}
+    \vspace{0.5cm}
+    {\Large De DGHV à TFHE et CKKS} \\[0.4cm]
+    \rule{\linewidth}{0.5mm} \\[1.5cm]
+    
+    % Auteurs
+    \vspace{1cm}
+    {\Large\itshape Présenté par :}\\[0.3cm]
+    {\Large Constantin \textsc{Delahodde}}\\[0.2cm]
+    {\Large Martin \textsc{Chedozeau}}\\[0.2cm]
+    {\Large Lucas \textsc{Schaeffer}}\\[1cm]
+    
+    % Responsable
+    {\large\itshape Sous la direction de :}\\[0.3cm]
+    {\Large M. Jacques \textsc{Patarin}}\\[2cm]
+    
+    \vfill
+    
+    % Date
+    {\large Année Universitaire 2025-2026\par}
+    
+\end{titlepage}
+% ==========================================
 
 \tableofcontents
 

@@ -11,6 +11,8 @@
         "**/*.run.xml": true,
         "**/*.synctex.gz": true,
         "**/*.toc": true,
-        "**/* (1).*": true
+        "**/* (1).*": true,
+        "**/*.nav": true,
+        "**/*.snm": true,
     }
 }
