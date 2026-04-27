@@ -6,7 +6,10 @@
 \usepackage[french]{babel}
 \usepackage[a4paper, margin=2.5cm]{geometry}
 \usepackage{csquotes}
-\usepackage{graphicx} % AJOUT : Pour insérer des images/logos
+\usepackage{graphicx} % Pour insérer des images/logos
+\usepackage{tocloft}
+\setlength{\cftbeforechapskip}{4pt} % Réduit l'espace au-dessus des chapitres
+\setlength{\cftbeforesecskip}{0pt}  % Réduit l'espace au-dessus des sections
 
 % --- MATHÉMATIQUES ---
 \usepackage{amsmath, amssymb, amsfonts, amsthm}
@@ -79,9 +82,13 @@
     {\large Année Universitaire 2025-2026\par}
     
 \end{titlepage}
-% ==========================================
 
+% Tables des matières
+\setcounter{page}{0}
 \tableofcontents
+\thispagestyle{empty}
+
+\newpage
 
 \input{chap1_intro}
 
@@ -91,7 +98,7 @@
 
 \input{chap4_ckks}
 
-\nocite{*}
-\printbibliography
+\nocite{*} % pour afficher toutes les sources
+\printbibliography[heading=bibintoc]
 
 \end{document}
