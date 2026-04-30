@@ -1,26 +1,94 @@
 \chapter{TFHE : Chiffrement sur le Tore}
-\subsection{Ouverture : le schéma TFHE}
+\subsection{Point historique}
 
-Le schéma \textbf{TFHE} (\textit{Fast Fully Homomorphic Encryption}) a été introduit en 2016 par Ilaria Chillotti, Nicolas Gama, Mariya Georgieva et Malika Izabachène. Il constitue une amélioration significative du schéma FHEW (2014), avec pour objectif principal de rendre l’opération de \textit{bootstrapping} suffisamment efficace pour permettre une utilisation pratique du chiffrement homomorphe complet.
+Le schéma \textbf{TFHE} (\textit{Fast Fully Homomorphic Encryption}) a été introduit en 2016 par Chillotti, Gama, Georgieva et Izabachène. Il constitue une amélioration du schéma FHEW (2014), avec pour objectif principal de rendre l’opération de \emph{bootstrapping} suffisamment rapide pour être utilisée en pratique après chaque opération.
 
-TFHE repose sur des structures algébriques issues de la théorie des réseaux euclidiens, et plus précisément sur des variantes du problème \textit{Learning With Errors} (LWE), ainsi que sur sa version adaptée au tore, appelée \textit{Torus-LWE} (TLWE).
+Cette avancée marque une rupture importante : là où les premiers schémas homomorphes complets étaient principalement théoriques, TFHE permet une évaluation efficace de circuits logiques profonds.
 
-Dans ce cadre, une notion mathématique centrale est celle de \textbf{tore}. En dimension 1, le tore est défini comme le quotient :
+\subsection{Le tore}
+
+\begin{definition}[Tore]
+On appelle \textbf{tore} (en dimension 1) le quotient
 \[
 \mathbb{T} = \mathbb{R} / \mathbb{Z}.
 \]
-Autrement dit, on identifie deux réels $x,y \in \mathbb{R}$ si $x - y \in \mathbb{Z}$. Chaque classe d’équivalence admet un représentant unique dans l’intervalle $[0,1[$, ce qui permet d’identifier $\mathbb{T}$ à cet intervalle muni de l’addition modulo 1.
+Autrement dit, deux réels $x,y \in \mathbb{R}$ sont identifiés si leur différence est un entier :
+\[
+x \sim y \iff x - y \in \mathbb{Z}.
+\]
+\end{definition}
 
-D’un point de vue algébrique, $\mathbb{T}$ est un groupe abélien compact pour l’addition modulo 1. D’un point de vue géométrique, il est isomorphe au cercle unité $S^1$. Cette structure permet de manipuler des quantités continues tout en conservant une interprétation modulaire.
+Chaque classe d’équivalence admet un représentant unique dans l’intervalle $[0,1[$, ce qui permet d’identifier $\mathbb{T}$ à cet intervalle muni de l’addition modulo $1$.
 
-Dans TFHE, les messages binaires sont encodés dans le tore, typiquement en associant $0$ et $1$ à deux points distincts de $\mathbb{T}$ (par exemple $0$ et $\frac{1}{2}$). Les opérations homomorphes consistent alors à manipuler des éléments bruités du tore, ce qui permet de réaliser des calculs tout en préservant le secret.
+\begin{remark}
+Le tore $\mathbb{T}$ est un groupe abélien pour l’addition modulo $1$. D’un point de vue géométrique, il est isomorphe au cercle unité $S^1$.
+\end{remark}
 
-Le schéma TFHE appartient à la classe des schémas de chiffrement homomorphe complet, permettant l’évaluation de fonctions arbitraires sur des données chiffrées. À la différence de constructions telles que DGHV, fondée sur une arithmétique sur les entiers, ou CKKS, qui autorise des calculs approchés sur des nombres réels ou complexes, TFHE repose sur une représentation binaire et sur l’évaluation de circuits booléens.
+\begin{example}
+Dans $\mathbb{T}$, on a :
+\[
+0.3 + 0.8 = 1.1 \equiv 0.1 \ (\mathrm{mod}\ 1).
+\]
+\end{example}
 
-Plus précisément, TFHE permet d’évaluer efficacement des fonctions $f : \{0,1\}^n \to \{0,1\}$ en opérant directement sur des chiffrés de bits. Par composition de portes logiques élémentaires (NOT, AND, OR), toute fonction booléenne peut être représentée par un circuit, ce qui confère au schéma une expressivité universelle.
+Dans TFHE, cette structure est utilisée pour encoder les messages. Par exemple, on peut représenter :
+\[
+0 \longleftrightarrow 0 \quad \text{et} \quad 1 \longleftrightarrow \frac{1}{2}.
+\]
 
-Un aspect fondamental du chiffrement homomorphe complet est la gestion du bruit, qui s’accumule lors des opérations. TFHE se distingue par une implémentation particulièrement efficace de l’opération de \textit{bootstrapping}, permettant de réduire ce bruit tout en conservant la valeur du message chiffré. Cette efficacité rend possible l’évaluation de circuits de grande profondeur.
+\subsection{Le problème TLWE}
 
-Ainsi, contrairement à CKKS qui privilégie les calculs numériques approchés, TFHE est particulièrement adapté à l’évaluation exacte de fonctions discrètes. Il illustre une approche complémentaire du chiffrement homomorphe, fondée sur des structures modulaires continues (le tore) pour représenter et manipuler des données discrètes.
+TFHE repose sur une variante du problème LWE adaptée au tore.
 
+\begin{definition}[TLWE]
+Soit $\mathbf{s} \in \{0,1\}^n$ un vecteur secret.  
+Un échantillon \textbf{TLWE} est un couple $(\mathbf{a}, b)$ avec :
+\[
+b = \langle \mathbf{a}, \mathbf{s} \rangle + m + e \ (\mathrm{mod}\ 1),
+\]
+où :
+\begin{itemize}
+    \item $\mathbf{a} \in \mathbb{T}^n$ est un vecteur aléatoire ;
+    \item $m \in \mathbb{T}$ est le message ;
+    \item $e$ est un petit bruit.
+\end{itemize}
+\end{definition}
+
+La sécurité repose sur le fait qu’il est difficile de retrouver $\mathbf{s}$ à partir de tels échantillons bruités.
+
+\subsection{Calcul booléen}
+
+Contrairement à CKKS, qui manipule des nombres réels approximés, TFHE travaille sur des bits.
+
+\begin{definition}[Fonction booléenne]
+Une fonction booléenne est une application
+\[
+f : \{0,1\}^n \to \{0,1\}.
+\]
+\end{definition}
+
+Toute fonction booléenne peut être construite à partir de portes logiques élémentaires (AND, OR, NOT).
+
+\begin{remark}
+Cela implique que TFHE permet d’évaluer n’importe quel circuit logique sur des données chiffrées.
+\end{remark}
+
+\subsection{Gestion du bruit et bootstrapping}
+
+Comme dans CKKS, les opérations homomorphes introduisent un bruit qui s’accumule.
+
+\begin{definition}[Bootstrapping]
+Le \textbf{bootstrapping} est une opération qui permet de transformer un chiffré bruité en un nouveau chiffré du même message, mais avec un bruit réduit.
+\end{definition}
+
+Dans TFHE, cette opération est particulièrement efficace et peut être appliquée très fréquemment, ce qui permet d’évaluer des circuits de grande profondeur.
+
+\subsection{Comparaison avec CKKS}
+
+\begin{itemize}
+    \item CKKS : calculs approchés sur des nombres réels ou complexes ;
+    \item TFHE : calculs exacts sur des bits (logique booléenne).
+\end{itemize}
+
+Ainsi, TFHE constitue une approche complémentaire du chiffrement homomorphe, fondée sur l’utilisation du tore pour manipuler des données discrètes via des représentations continues.
 % Contenu à venir sur les réseaux et le bootstrapping rapide.
