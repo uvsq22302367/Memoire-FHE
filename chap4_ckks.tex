@@ -175,7 +175,7 @@ m \leftarrow \mathrm{Encodage}_{\Delta}(\mathbf{z})
 
 \State Chiffrer $m$ pour obtenir le chiffré
 \[
-\mathbf{c} \leftarrow \mathrm{Enc}_{\mathrm{pk}}(m)
+\mathbf{c} \leftarrow \mathrm{Encrypt}_{\mathrm{pk}}(m)
 \]
 
 \State Effectuer les opérations homomorphes souhaitées sur $\mathbf{c}$ (additions/multiplications)
@@ -188,9 +188,9 @@ m \leftarrow \mathrm{Encodage}_{\Delta}(\mathbf{z})
 
 \State \textbf{Bootstrapping :} Appliqué après plusieurs multiplications consécutives (ou très grand nombre d'additions) pour rafraîchir le chiffré et réduire le bruit accumulé.
 
-\State Déchiffrer :
+\State Déchiffrer
 \[
-m^\star \leftarrow \mathrm{Dec}_{\mathrm{sk}}(\mathbf{c})
+m^\star \leftarrow \mathrm{Decrypt}_{\mathrm{sk}}(\mathbf{c})
 \]
 
 \State Retourner
