@@ -12,12 +12,12 @@ Le verrou technologique saute en 2009 lorsque Craig Gentry, dans sa thèse de do
 
 \subsection{De la théorie à l'efficience : vers une cryptographie multi-facettes}
 
-À la suite des travaux de Gentry, la recherche s'est orientée vers la réduction de la complexité algorithmique et la diversification des structures mathématiques sous-jacentes. On distingue alors plusieurs générations de schémas, passant des réseaux idéaux à des problèmes plus stables comme le \textit{Learning With Errors} (LWE). Ce mémoire se propose d'analyser cette évolution à travers trois protocoles emblématiques qui illustrent la maturité actuelle du domaine :
+À la suite des travaux de Gentry, la recherche s'est orientée vers la réduction de la complexité algorithmique et la diversification des structures mathématiques sous-jacentes. On distingue alors plusieurs générations de schémas, passant des réseaux idéaux à des problèmes plus stables comme le \textit{Learning With Errors} (LWE). Ce mémoire se propose d'analyser cette évolution à travers l'étude approfondie de deux protocoles emblématiques, et l'ouverture vers un troisième, qui illustrent la maturité actuelle du domaine :
 
 \begin{itemize}
     \item \textbf{Le schéma DGHV (2010) :} Proposé par van Dijk, Gentry, Halevi et Vaikuntanathan, il simplifie la construction de Gentry en remplaçant les réseaux complexes par l'arithmétique des entiers. L'étude de DGHV est pédagogiquement essentielle pour comprendre la gestion du bruit via le problème du diviseur commun approximatif (AGCD).
-    \item \textbf{Le schéma TFHE (2016) :} Représentant de la troisième génération, le \textit{Torus FHE} se distingue par son optimisation radicale du \textit{bootstrapping}. En travaillant sur le tore réel, il permet d'évaluer des portes logiques (NAND, XOR) en quelques millisecondes, ouvrant la voie à l'exécution de circuits booléens complexes et de microprocesseurs chiffrés.
     \item \textbf{Le schéma CKKS (2017) :} Conçu par Cheon, Kim, Kim et Song, ce schéma marque un tournant pragmatique. Contrairement aux schémas exacts, CKKS traite le bruit comme une erreur d'arrondi inhérente au calcul en virgule flottante. Cette approche « approximative » le rend incomparablement plus efficace pour le \textit{Machine Learning} et le traitement de données statistiques à grande échelle.
+    \item \textbf{Le schéma TFHE (2016) :} Nous proposerons en fin de document une ouverture vers ce schéma représentatif de la troisième génération. En travaillant sur le tore réel, il se distingue par son optimisation radicale du \textit{bootstrapping}, ouvrant la voie à l'exécution de circuits booléens complexes.
 \end{itemize}
 
 L'enjeu de ce travail sera de démontrer comment ces constructions mathématiques, bien que radicalement différentes dans leurs approches, convergent vers un objectif commun : rendre le traitement de données privées aussi fluide et universel que le calcul en clair.
