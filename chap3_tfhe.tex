@@ -40,14 +40,14 @@ Chaque élément de $\mathbb{T}$ admet un représentant unique dans l’interval
 
 \subsection{Le problème TLWE (Torus Learning With Errors)}
 
-La sécurité du TFHE repose sur le problème TLWE, une adaptation du problème LWE classique au tore réel.
+La sécurité du TFHE repose sur le problème TLWE.
 
 \begin{definition}[Échantillon TLWE]
 Soit $k \ge 1$ et $\mathbf{s} \in \{0,1\}^k$ une clé secrète binaire. Un échantillon TLWE d'un message $\mu \in \mathbb{T}$ est un couple $(\mathbf{a}, b) \in \mathbb{T}^k \times \mathbb{T}$ tel que :
 \[
 b = \sum_{i=1}^{k} a_i \cdot s_i + e + \mu \pmod 1
 \]
-où $\mathbf{a}$ est un vecteur aléatoire uniforme sur $\mathbb{T}^k$ et $e$ est un bruit gaussien de faible amplitude.
+où $\mathbf{a}$ est un vecteur aléatoire uniforme sur $\mathbb{T}^k$ et $e$ est un bruit (c'est une gaussienne de faible amplitude).
 \end{definition}
 
 \subsection{Encodage des bits}
@@ -56,20 +56,21 @@ Pour maximiser la résistance au bruit, on encode généralement un bit $m \in \
 
 \subsection{Fonctions booléennes}
 
-TFHE permet d’évaluer des portes logiques (AND, OR, XOR) directement sur des échantillons TLWE. Comme toute fonction booléenne peut être décomposée en ces portes fondamentales, TFHE est capable d'exécuter n'importe quel circuit logique de manière chiffrée.
+TFHE permet d’évaluer des portes logiques (AND, OR, XOR) directement sur des échantillons TLWE. Comme toute fonction booléenne peut être décomposée en ces portes, TFHE est capable d'exécuter n'importe quel circuit logique de manière chiffrée. C'est à dire que n'importe quelle opération logique complexe peut être réduite à une suite de petites opérations élémentaires (en somme, multiplication...)
 
 \section{Gestion du bruit et rafraîchissement}
 
-\subsection{Accumulation du bruit}
-
-Lors d’opérations successives, le bruit $e$ s'accumule. Si l'amplitude du bruit dépasse $1/8$, la distinction entre $0$ et $1/4$ devient impossible, rendant le déchiffrement erroné.
-
 \subsection{Le Bootstrapping Programmable}
 
-La grande innovation du TFHE réside dans son \textbf{bootstrapping}. Contrairement aux schémas précédents, il est \guillemotleft~programmable~\guillemotright : il peut évaluer une fonction arbitraire (via une \textit{Look-Up Table}) pendant le processus de réduction du bruit.
+Lors d’opérations successives, le bruit $e$ s'accumule. Si l'amplitude du bruit dépasse $1/8$, la distinction entre $0$ et $1/4$ devient impossible, rendant le déchiffrement erroné.
+La grande innovation du TFHE réside dans son \textbf{bootstrapping}. Contrairement aux schémas précédents, il est \guillemotleft~programmable~\guillemotright : il peut évaluer une fonction arbitraire pendant le processus de réduction du bruit.
 
 Cette opération est réalisée en quelques millisecondes, garantissant ainsi une profondeur de calcul théoriquement infinie.
 
 \section{Conclusion}
 
-Le schéma TFHE complète parfaitement le paysage de la cryptographie homomorphe. Si CKKS reste privilégié pour le calcul statistique approché, TFHE s'impose comme la solution de référence pour la logique booléenne exacte et le contrôle de flux chiffré.
+En conclusion, le schéma TFHE marque un tournant décisif dans l'évolution du chiffrement homomorphe. Si le schéma DGHV a posé les bases théoriques sur les entiers et CKKS a optimisé le calcul numérique approché, le TFHE apporte la brique manquante : l'efficacité du calcul logique exact.
+
+Grâce à l'utilisation ingénieuse du tore réel et à l'introduction du bootstrapping programmable, ce schéma transforme une contrainte mathématique — le bruit — en un levier de calcul puissant. Cette capacité à traiter des fonctions booléennes en quelques millisecondes permet de s'affranchir des limites de profondeur des circuits, offrant ainsi une flexibilité d'utilisation jusqu'alors inédite.
+
+Le TFHE ne se contente pas de sécuriser les données au repos ou en transit ; il instaure un \textbf{modèle de protection active}. En permettant l'exécution de programmes complets sur des données chiffrées sans compromis sur la précision, il s'impose comme une solution de référence pour les architectures de demain.
