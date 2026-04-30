@@ -4,7 +4,7 @@
 
 Le schéma \textbf{TFHE} (\textit{Fast Fully Homomorphic Encryption over the Torus}) constitue l'une des avancées les plus significatives de la dernière décennie en cryptographie. Introduit en 2016, il est le fruit des travaux d'une équipe de chercheurs composée de \textbf{Ilaria Chillotti, Nicolas Gama, Mariya Georgieva et Malika Izabachène}. 
 
-Ce schéma s'inscrit comme une amélioration radicale du schéma FHEW (2014). Son objectif principal était de lever le verrou technologique du \textit{bootstrapping}, en le rendant suffisamment rapide (de l'ordre de la milliseconde) pour permettre des calculs complexes et arbitrairement profonds sur des données chiffrées en temps quasi-réel[cite: 5].
+Ce schéma s'inscrit comme une amélioration radicale du schéma FHEW (2014). Son objectif principal était de lever le verrou technologique du \textit{bootstrapping}, en le rendant suffisamment rapide (de l'ordre de la milliseconde) pour permettre des calculs complexes et arbitrairement profonds sur des données chiffrées en temps quasi-réel.
 
 \section{Comparaison entre les schémas DGHV et CKKS}
 
@@ -16,10 +16,10 @@ Le passage du DGHV au CKKS illustre l'évolution des priorités : de la preuve d
 \begin{tabular}{|l|p{5cm}|p{5cm}|}
 \hline
 \textbf{Caractéristique} & \textbf{DGHV} & \textbf{CKKS} \\ \hline
-\textbf{Espace de calcul} & Entiers relatifs ($\mathbb{Z}$)[cite: 5] & Nombres complexes / réels ($\mathbb{C}$ ou $\mathbb{R}$)[cite: 5] \\ \hline
-\textbf{Type de calcul} & Arithmétique exacte[cite: 5] & Arithmétique approchée[cite: 5] \\ \hline
-\textbf{Avantage majeur} & Simplicité conceptuelle reposant sur les entiers[cite: 5]. & Traitement de vecteurs (SIMD) pour le \textit{Machine Learning}[cite: 5]. \\ \hline
-\textbf{Limites} & Taille des chiffrés trop importante en pratique[cite: 5]. & Inadapté aux calculs logiques exacts[cite: 5]. \\ \hline
+\textbf{Espace de calcul} & Entiers relatifs ($\mathbb{Z}$) & Nombres complexes / réels ($\mathbb{C}$ ou $\mathbb{R}$) \\ \hline
+\textbf{Type de calcul} & Arithmétique exacte & Arithmétique approchée \\ \hline
+\textbf{Avantage majeur} & Simplicité conceptuelle reposant sur les entiers. & Traitement de vecteurs (SIMD) pour le \textit{Machine Learning}. \\ \hline
+\textbf{Limites} & Taille des chiffrés trop importante en pratique. & Inadapté aux calculs logiques exacts. \\ \hline
 \end{tabular}
 \caption{Comparaison synthétique des schémas DGHV et CKKS}
 \end{table}
@@ -28,48 +28,48 @@ Alors que DGHV et CKKS se heurtent au coût du rafraîchissement du bruit, le TF
 
 \section{Fondements mathématiques}
 
-\subsubsection{Le tore}
+\subsection{Le tore}
 
 \begin{definition}[Tore]
-On appelle \textbf{tore} (en dimension 1) le quotient $\mathbb{T} = \mathbb{R} / \mathbb{Z}$[cite: 5].
+On appelle \textbf{tore} (en dimension 1) le quotient $\mathbb{T} = \mathbb{R} / \mathbb{Z}$.
 \end{definition}
 
 \begin{proposition}
-Chaque élément de $\mathbb{T}$ admet un représentant unique dans l’intervalle $[0,1[$[cite: 5].
+Chaque élément de $\mathbb{T}$ admet un représentant unique dans l’intervalle $[0,1[$.
 \end{proposition}
 
 \subsection{Le problème TLWE (Torus Learning With Errors)}
 
-La sécurité du TFHE repose sur le problème TLWE, une adaptation du problème LWE classique au tore réel[cite: 5].
+La sécurité du TFHE repose sur le problème TLWE, une adaptation du problème LWE classique au tore réel.
 
 \begin{definition}[Échantillon TLWE]
 Soit $k \ge 1$ et $\mathbf{s} \in \{0,1\}^k$ une clé secrète binaire. Un échantillon TLWE d'un message $\mu \in \mathbb{T}$ est un couple $(\mathbf{a}, b) \in \mathbb{T}^k \times \mathbb{T}$ tel que :
 \[
 b = \sum_{i=1}^{k} a_i \cdot s_i + e + \mu \pmod 1
 \]
-où $\mathbf{a}$ est un vecteur aléatoire uniforme sur $\mathbb{T}^k$ et $e$ est un bruit gaussien de faible amplitude[cite: 5].
+où $\mathbf{a}$ est un vecteur aléatoire uniforme sur $\mathbb{T}^k$ et $e$ est un bruit gaussien de faible amplitude.
 \end{definition}
 
 \subsection{Encodage des bits}
 
-Pour maximiser la résistance au bruit, on encode généralement un bit $m \in \{0,1\}$ par $\mu = m \cdot \frac{1}{4} \in \mathbb{T}$[cite: 5]. Ainsi, le bit $0$ correspond à la valeur $0$ et le bit $1$ à la valeur $0.25$[cite: 5].
+Pour maximiser la résistance au bruit, on encode généralement un bit $m \in \{0,1\}$ par $\mu = m \cdot \frac{1}{4} \in \mathbb{T}$. Ainsi, le bit $0$ correspond à la valeur $0$ et le bit $1$ à la valeur $0.25$.
 
 \subsection{Fonctions booléennes}
 
-TFHE permet d’évaluer des portes logiques (AND, OR, XOR) directement sur des échantillons TLWE[cite: 5]. Comme toute fonction booléenne peut être décomposée en ces portes fondamentales, TFHE est capable d'exécuter n'importe quel circuit logique de manière chiffrée[cite: 5].
+TFHE permet d’évaluer des portes logiques (AND, OR, XOR) directement sur des échantillons TLWE. Comme toute fonction booléenne peut être décomposée en ces portes fondamentales, TFHE est capable d'exécuter n'importe quel circuit logique de manière chiffrée.
 
 \section{Gestion du bruit et rafraîchissement}
 
 \subsection{Accumulation du bruit}
 
-Lors d’opérations successives, le bruit $e$ s'accumule[cite: 5]. Si l'amplitude du bruit dépasse $1/8$, la distinction entre $0$ et $1/4$ devient impossible, rendant le déchiffrement erroné[cite: 5].
+Lors d’opérations successives, le bruit $e$ s'accumule. Si l'amplitude du bruit dépasse $1/8$, la distinction entre $0$ et $1/4$ devient impossible, rendant le déchiffrement erroné.
 
 \subsection{Le Bootstrapping Programmable}
 
-La grande innovation du TFHE réside dans son \textbf{bootstrapping}. Contrairement aux schémas précédents, il est \guillemotleft~programmable~\guillemotright : il peut évaluer une fonction arbitraire (via une \textit{Look-Up Table}) pendant le processus de réduction du bruit[cite: 5].
+La grande innovation du TFHE réside dans son \textbf{bootstrapping}. Contrairement aux schémas précédents, il est \guillemotleft~programmable~\guillemotright : il peut évaluer une fonction arbitraire (via une \textit{Look-Up Table}) pendant le processus de réduction du bruit.
 
-Cette opération est réalisée en quelques millisecondes, garantissant ainsi une profondeur de calcul théoriquement infinie[cite: 5].
+Cette opération est réalisée en quelques millisecondes, garantissant ainsi une profondeur de calcul théoriquement infinie.
 
 \section{Conclusion}
 
-Le schéma TFHE complète parfaitement le paysage de la cryptographie homomorphe. Si CKKS reste privilégié pour le calcul statistique approché, TFHE s'impose comme la solution de référence pour la logique booléenne exacte et le contrôle de flux chiffré[cite: 5].
+Le schéma TFHE complète parfaitement le paysage de la cryptographie homomorphe. Si CKKS reste privilégié pour le calcul statistique approché, TFHE s'impose comme la solution de référence pour la logique booléenne exacte et le contrôle de flux chiffré.
