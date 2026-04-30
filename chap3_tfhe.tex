@@ -1,11 +1,11 @@
 \chapter{TFHE : Chiffrement sur le Tore}
-\subsection{Point historique}
+\section{Point historique}
 
 Le schéma \textbf{TFHE} (\textit{Fast Fully Homomorphic Encryption}) a été introduit en 2016 par Chillotti, Gama, Georgieva et Izabachène. Il constitue une amélioration du schéma FHEW (2014), avec pour objectif principal de rendre l’opération de \emph{bootstrapping} suffisamment rapide pour être utilisée en pratique après chaque opération.
 
-Cette avancée marque une rupture importante : là où les premiers schémas homomorphes complets étaient principalement théoriques, TFHE permet une évaluation efficace de circuits logiques profonds.
+Cette avancée marque une rupture importante : là où les premiers schémas homomorphes complets étaient principalement théoriques, TFHE permet une évaluation efficace de circuits logiques.
 
-\subsection{Le tore}
+\section{Le tore}
 
 \begin{definition}[Tore]
 On appelle \textbf{tore} (en dimension 1) le quotient
@@ -36,11 +36,11 @@ Dans TFHE, cette structure est utilisée pour encoder les messages. Par exemple,
 0 \longleftrightarrow 0 \quad \text{et} \quad 1 \longleftrightarrow \frac{1}{2}.
 \]
 
-\subsection{Le problème TLWE}
+\section{Le problème TLWE}
 
-TFHE repose sur une variante du problème LWE adaptée au tore.
+TFHE repose sur une variante du problème LWE (Learning With Errors) adaptée au tore.
 
-\begin{definition}[TLWE]
+\begin{definition}[TLWE(Torus Learning With Errors)]
 Soit $\mathbf{s} \in \{0,1\}^n$ un vecteur secret.  
 Un échantillon \textbf{TLWE} est un couple $(\mathbf{a}, b)$ avec :
 \[
@@ -56,7 +56,7 @@ où :
 
 La sécurité repose sur le fait qu’il est difficile de retrouver $\mathbf{s}$ à partir de tels échantillons bruités.
 
-\subsection{Calcul booléen}
+\section{Calcul booléen}
 
 Contrairement à CKKS, qui manipule des nombres réels approximés, TFHE travaille sur des bits.
 
@@ -73,17 +73,12 @@ Toute fonction booléenne peut être construite à partir de portes logiques él
 Cela implique que TFHE permet d’évaluer n’importe quel circuit logique sur des données chiffrées.
 \end{remark}
 
-\subsection{Gestion du bruit et bootstrapping}
+\section{Le Bootstrapping Programmable}
 
-Comme dans CKKS, les opérations homomorphes introduisent un bruit qui s’accumule.
+La contribution majeure du TFHE est la rapidité de son bootstrapping. Contrairement aux schémas précédents où cette opération n'est qu'un "mal nécessaire" pour réduire le bruit, le TFHE introduit le concept de Bootstrapping Programmable.
 
-\begin{definition}[Bootstrapping]
-Le \textbf{bootstrapping} est une opération qui permet de transformer un chiffré bruité en un nouveau chiffré du même message, mais avec un bruit réduit.
-\end{definition}
-
-Dans TFHE, cette opération est particulièrement efficace et peut être appliquée très fréquemment, ce qui permet d’évaluer des circuits de grande profondeur.
-
-\subsection{Comparaison avec CKKS}
+Ici, le processus de réduction du bruit est couplé à l'évaluation d'une fonction (généralement via une Look-Up Table). En d'autres termes, on ne se contente pas de nettoyer la donnée : on profite de cette étape pour calculer une porte logique ou une fonction non-linéaire. Ce bootstrapping ne prend plus quelques secondes, mais seulement quelques millisecondes, permettant pour la première fois d'envisager l'exécution de programmes complexes et arbitrairement longs en temps quasi-réel.
+\section{Comparaison avec CKKS}
 
 \begin{itemize}
     \item CKKS : calculs approchés sur des nombres réels ou complexes ;
