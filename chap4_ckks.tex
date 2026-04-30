@@ -152,10 +152,10 @@ Le point important est le suivant : \emph{on encode avec un arrondi, donc on acc
 
 CKKS peut être vu comme un schéma à quatre grandes étapes :
 \begin{enumerate}[leftmargin=2em]
-  \item génération des clés ;
-  \item encodage et chiffrement ;
-  \item calcul homomorphe ;
-  \item déchiffrement et décodage.
+  \item Génération des clés ;
+  \item Encodage et chiffrement ;
+  \item Calcul homomorphe ;
+  \item Déchiffrement et décodage.
 \end{enumerate}
 
 Avant de détailler le fonctionnement de CKKS, il est utile de présenter un schéma conceptuel de l’algorithme. Il permet de visualiser les grandes étapes du processus et de mieux situer les notions qui seront expliquées plus en détail dans la suite du mémoire.
@@ -163,40 +163,29 @@ Avant de détailler le fonctionnement de CKKS, il est utile de présenter un sch
 \begin{algorithm}[htbp]
 \caption{Schéma conceptuel de CKKS}
 \begin{algorithmic}[1]
+\setstretch{1.2}
 
 \State \textbf{Entrée :} un vecteur de nombres $\mathbf{z}$, une échelle $\Delta$
 
 \State Générer une paire de clés $(\mathrm{pk}, \mathrm{sk})$
 
-\State Calculer
-\[
-m \leftarrow \mathrm{Encodage}_{\Delta}(\mathbf{z})
-\]
+\State Calculer $m \leftarrow \mathrm{Encodage}_{\Delta}(\mathbf{z})$
 
-\State Chiffrer $m$ pour obtenir le chiffré
-\[
-\mathbf{c} \leftarrow \mathrm{Encrypt}_{\mathrm{pk}}(m)
-\]
+\State Chiffrer $m$ pour obtenir le chiffré $\mathbf{c} \leftarrow \mathrm{Encrypt}_{\mathrm{pk}}(m)$
 
 \State Effectuer les opérations homomorphes souhaitées sur $\mathbf{c}$ (additions/multiplications)
 
-\State \textbf{Pour chaque multiplication effectuée}
+\hspace{-0.95cm} \textbf{Pour chaque multiplication effectuée}
 
-\State \hspace{0.5cm} \textbf{Relinearisation :} se ramener d'un chiffré de taille 3 à 2
+\State \hspace{0.5cm} \textbf{Relinéarisation :} se ramener d'un chiffré de taille 3 à 2
 
 \State \hspace{0.5cm} \textbf{Rescaling :} ramener l'échelle de $\Delta^2$ à $\Delta$
 
 \State \textbf{Bootstrapping :} Appliqué après plusieurs multiplications consécutives (ou très grand nombre d'additions) pour rafraîchir le chiffré et réduire le bruit accumulé.
 
-\State Déchiffrer
-\[
-m^\star \leftarrow \mathrm{Decrypt}_{\mathrm{sk}}(\mathbf{c})
-\]
+\State Déchiffrer $m^\star \leftarrow \mathrm{Decrypt}_{\mathrm{sk}}(\mathbf{c})$
 
-\State Retourner
-\[
-\mathrm{Decode}\left(\frac{m^\star}{\Delta}\right)
-\]
+\State Retourner $\mathrm{Decode}\left(\frac{m^\star}{\Delta}\right)$
 
 \end{algorithmic}
 \end{algorithm}
