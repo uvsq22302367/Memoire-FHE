@@ -371,7 +371,7 @@ La gestion du bruit est donc un problème au cœur pratique du schéma. Il faut 
 \begin{itemize}[leftmargin=2em]
   \item la taille de l'échelle $\Delta$ ;
   \item la taille du module $q$ ;
-  \item Une stratégie de bootstrapping \emph{(afin de réduire le bruit entre certains calculs homomorphes)} si elle est nécessaire.
+  \item Une stratégie de bootstrapping. Celle-ci permet de rafraîchir le chiffré en réduisant le bruit à partir de la clé publique (pk). Elle devient nécéssaire après l'enchaînement de plusieurs calculs homomorphes notamment la multiplication qui agmente considérablement le bruit. Le bootstrapping est cependant couteux et complexe, il ne sera pas détaillé dans ce mémoire.
 \end{itemize}
 
 Il existe donc un compromis permanent entre sécurité, précision et vitesse.
