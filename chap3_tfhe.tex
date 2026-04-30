@@ -66,13 +66,13 @@ Lors d’opérations successives, le bruit $e$ s'accumule. Si l'amplitude du bru
 
 Le bootstrapping programmable est l'innovation majeure du schéma TFHE qui transforme une étape de maintenance technique en une étape de calcul utile. Voici un résumé de ses caractéristiques essentielles :
 
-Double fonction : Contrairement au bootstrapping classique qui ne fait que "nettoyer" le bruit d'un chiffré, le bootstrapping programmable réduit le bruit tout en évaluant simultanément une fonction logique ou mathématique.
+\begin{itemize}
+    \item \textbf{Double fonction :} Contrairement au bootstrapping classique qui ne fait que \guillemotleft~nettoyer~\guillemotright\ le bruit d'un chiffré, le bootstrapping programmable réduit le bruit tout en évaluant simultanément une fonction logique ou mathématique.
+    \item \textbf{Utilisation de LUT (Look-Up Table) :} Le processus s'appuie sur une table de correspondance. Pendant l'opération de rafraîchissement, le système applique la fonction encodée dans cette table directement à la donnée chiffrée.
+    \item \textbf{Calcul non-linéaire :} Il permet de calculer efficacement des fonctions complexes ou non-linéaires (comme des comparaisons, des seuils ou des fonctions d'activation) qui sont d'ordinaire très coûteuses en chiffrement homomorphe.
+    \item \textbf{Vitesse et continuité :} Grâce à l'arithmétique sur le tore, cette opération s'effectue en quelques millisecondes. Cela permet d'enchaîner un nombre virtuellement infini d'opérations puisque le niveau de bruit est réinitialisé après chaque calcul.
+\end{itemize}
 
-Utilisation de LUT (Look-Up Table) : Le processus utilise une table de correspondance. Pendant l'opération de réduction du bruit, le système applique la fonction encodée dans cette table à la donnée chiffrée.
-
-Calcul non-linéaire : Il permet de calculer facilement des fonctions complexes ou non-linéaires (comme des comparaisons, des seuils ou des fonctions d'activation en IA) qui sont d'ordinaire très coûteuses en homomorphe.
-
-Vitesse et efficacité : Grâce à la structure du Tore, cette opération s'effectue en quelques millisecondes, permettant d'enchaîner un nombre théoriquement infini d'opérations puisque le bruit est réinitialisé après chaque calcul.
 \section{Conclusion}
 
 En conclusion, le schéma TFHE marque un tournant décisif dans l'évolution du chiffrement homomorphe. Si le schéma DGHV a posé les bases théoriques sur les entiers et CKKS a optimisé le calcul numérique approché, le TFHE apporte la brique manquante : l'efficacité du calcul logique exact.
