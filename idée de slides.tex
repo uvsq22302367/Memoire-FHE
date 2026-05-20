@@ -1,164 +1,1074 @@
-\documentclass[10pt]{beamer}
+\documentclass[10pt,aspectratio=169]{beamer}
 
-% --- THEME BEAMER ---
-\usetheme{Madrid} % Thème très classique et propre
-\usecolortheme{default}
-\setbeamertemplate{navigation symbols}{} % Enlève les symboles de navigation inutiles en bas
-
-% --- PACKAGES ---
+% --- Langue et encodage ---
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage[french]{babel}
-\usepackage{amsmath, amssymb, amsfonts}
-\usepackage{graphicx}
+\usepackage{lmodern}
 
-% --- INFORMATIONS DE LA PAGE DE TITRE ---
-\title[Le Chiffrement Homomorphe (FHE)]{Étude du Chiffrement Totalement Homomorphe}
-\subtitle{De DGHV à TFHE et CKKS}
-\author[Delahodde, Chedozeau, Schaeffer]{C. Delahodde, M. Chedozeau, L. Schaeffer}
+% --- Maths et mise en page ---
+\usepackage{amsmath,amssymb,amsfonts,mathtools}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{graphicx}
+\usepackage{xcolor}
+
+% --- Thème ---
+\usetheme{Madrid}
+\usecolortheme{default}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}[frame number]
+
+\definecolor{uvsqblue}{RGB}{22,66,121}
+\definecolor{uvsqgreen}{RGB}{0,132,121}
+\definecolor{softgray}{RGB}{246,248,250}
+\definecolor{softgreen}{RGB}{232,246,243}
+
+\setbeamercolor{structure}{fg=uvsqblue}
+\setbeamercolor{title}{fg=white,bg=uvsqblue}
+\setbeamercolor{frametitle}{fg=white,bg=uvsqblue}
+\setbeamercolor{block title}{fg=white,bg=uvsqblue}
+\setbeamercolor{block body}{bg=softgray,fg=black}
+\setbeamercolor{example block title}{fg=white,bg=uvsqgreen}
+\setbeamercolor{example block body}{bg=softgreen,fg=black}
+\setbeamerfont{frametitle}{series=\bfseries}
+
+\newcommand{\FHE}{\textit{Fully Homomorphic Encryption}}
+\newcommand{\Enc}{\mathrm{Enc}}
+\newcommand{\Dec}{\mathrm{Dec}}
+\newcommand{\Eval}{\mathrm{Eval}}
+\newcommand{\KeyGen}{\mathrm{KeyGen}}
+\newcommand{\pk}{\mathrm{pk}}
+\newcommand{\sk}{\mathrm{sk}}
+\newcommand{\ZZ}{\mathbb{Z}}
+\newcommand{\RR}{\mathbb{R}}
+\newcommand{\CC}{\mathbb{C}}
+\newcommand{\TT}{\mathbb{T}}
+
+% --- Informations ---
+\title[Chiffrement totalement homomorphe]{Étude du chiffrement totalement homomorphe}
+\subtitle{Fonctionnement de DGHV, CKKS et ouverture vers TFHE}
+\author[Delahodde, Chedozeau, Schaeffer]{Constantin Delahodde \and Martin Chedozeau \and Lucas Schaeffer}
 \institute[UVSQ]{
-    Licence Double Diplôme Mathématiques - Physique\\
-    Université de Versailles Saint-Quentin\\
-    \medskip
-    {\small Sous la direction de J. Patarin}
+  Licence Double Diplôme Mathématiques--Physique\\
+  Université de Versailles Saint-Quentin\\[0.25em]
+  \small Sous la direction de M. Jacques Patarin
 }
-\date{Année 2025-2026}
-\logo{\includegraphics[height=1cm]{uvsq_logo.jpg}}
+\date{Année universitaire 2025--2026}
+\logo{\includegraphics[height=0.75cm]{uvsq_logo.jpg}}
 
 \begin{document}
 
-% --- PAGE DE TITRE ---
+% =========================================================
 \begin{frame}
-    \titlepage
+  \titlepage
 \end{frame}
 
-% --- SOMMAIRE ---
-\begin{frame}{Plan de la présentation}
-    \tableofcontents
+\begin{frame}{Objectif de la présentation}
+  \begin{block}{Question centrale}
+    Comment peut-on calculer sur des données chiffrées sans jamais les déchiffrer ?
+  \end{block}
+
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.49\textwidth}
+      \begin{itemize}
+        \item Comprendre le principe général du FHE.
+        \item Expliquer le rôle du bruit.
+        \item Étudier les étapes algorithmiques des schémas.
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.49\textwidth}
+      \begin{block}{Plan}
+        \begin{enumerate}
+          \item Modèle de calcul du FHE.
+          \item DGHV : chiffrement sur les entiers.
+          \item CKKS : calcul approché vectorisé.
+          \item TFHE : calcul booléen rapide.
+        \end{enumerate}
+      \end{block}
+    \end{column}
+  \end{columns}
 \end{frame}
 
-% ==========================================
-\section{Introduction au FHE}
-% ==========================================
+% =========================================================
+\section{Idée générale du FHE}
 
-\begin{frame}{Le paradoxe de la confidentialité}
-    \begin{block}{Le problème classique}
-        Traditionnellement, la donnée est soit \textbf{sécurisée} (chiffrée) soit \textbf{traitable} (en clair). Calculer sur des données sensibles nécessite un déchiffrement en RAM, créant une faille.
-    \end{block}
-    
-    \vspace{0.5cm}
-    
+\begin{frame}{Le verrou que le FHE cherche à lever}
+  \begin{block}{Cryptographie classique}
+    Une donnée est soit protégée, soit utilisable directement. Pour calculer dessus, il faut généralement la déchiffrer.
+  \end{block}
+
+  \vspace{0.25cm}
+  \begin{center}
+    \[
+      m \xrightarrow{\Enc} c
+      \qquad
+      c \xrightarrow{\Dec} m
+      \qquad
+      \text{calcul en clair : } f(m)
+    \]
+  \end{center}
+
+  \begin{exampleblock}{Idée du FHE}
+    Déléguer le calcul à un serveur qui manipule seulement des chiffrés :
+    \[
+      \Eval(f,\Enc(m_1),\ldots,\Enc(m_k))
+      =
+      \Enc(f(m_1,\ldots,m_k)).
+    \]
+  \end{exampleblock}
+\end{frame}
+
+\begin{frame}{Pourquoi addition et multiplication suffisent}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.48\textwidth}
+      \begin{block}{Circuits booléens}
+        Un programme peut être vu comme un circuit composé de portes logiques.
+      \end{block}
+      \[
+        \text{XOR} \leftrightarrow + \bmod 2,
+        \qquad
+        \text{AND} \leftrightarrow \times \bmod 2.
+      \]
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \begin{block}{Critère de succès}
+        Si un schéma permet d'additionner et de multiplier les chiffrés, alors il peut évaluer tout circuit :
+        \[
+          \Dec(c_1+c_2)=m_1\oplus m_2,
+        \]
+        \[
+          \Dec(c_1c_2)=m_1m_2.
+        \]
+      \end{block}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Le bruit : sécurité et limite du calcul}
+  \begin{block}{Principe commun aux schémas étudiés}
+    Le bruit empêche de retrouver la clé ou le message à partir des chiffrés. Mais chaque calcul augmente ce bruit.
+  \end{block}
+
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.5\textwidth}
+      \begin{itemize}
+        \item bruit faible : le déchiffrement reste correct ;
+        \item bruit trop grand : le message est détruit ;
+        \item multiplication : l'opération la plus coûteuse.
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.46\textwidth}
+      \begin{exampleblock}{Bootstrapping}
+        Évaluer homomorphiquement le déchiffrement pour obtenir un nouveau chiffré du même message, mais avec moins de bruit.
+      \end{exampleblock}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Repères historiques}
+  \small
+  \begin{tabularx}{\textwidth}{@{}lX@{}}
+    \toprule
+    \textbf{1978} & Rivest, Adleman et Dertouzos introduisent les \textit{privacy homomorphisms}.\\
+    \textbf{2009} & Gentry construit le premier FHE grâce au bootstrapping.\\
+    \textbf{2010} & DGHV simplifie l'approche avec des entiers et le problème AGCD.\\
+    \textbf{2016} & TFHE accélère le bootstrapping sur le tore.\\
+    \textbf{2017} & CKKS propose un FHE approché pour les réels et les complexes.\\
+    \bottomrule
+  \end{tabularx}
+
+  \vspace{0.35cm}
+  \begin{block}{Fil du mémoire}
+    Les trois schémas répondent au même problème, mais avec des choix différents : exactitude, approximation, calcul logique, vectorisation, coût du bootstrapping.
+  \end{block}
+\end{frame}
+
+% =========================================================
+\section{DGHV}
+
+\begin{frame}{DGHV : pourquoi commencer par ce schéma ?}
+  \begin{block}{Intérêt pédagogique}
+    DGHV remplace les réseaux de Gentry par de l'arithmétique sur les entiers. Cela rend très visible le mécanisme central : bruit, seuil critique, profondeur.
+  \end{block}
+
+  \begin{itemize}
+    \item Message : un bit $b\in\{0,1\}$.
+    \item Clé secrète : un grand entier impair $p$.
+    \item Chiffré : un presque-multiple de $p$ dont la parité contient le message.
+    \item Sécurité : problème du plus grand commun diviseur approximatif, AGCD.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Le problème AGCD}
+  \begin{block}{Sans bruit : attaque immédiate}
+    Si l'on donne des multiples exacts
+    \[
+      x_i=pq_i,
+    \]
+    alors un PGCD permet de retrouver $p$.
+  \end{block}
+
+  \begin{exampleblock}{Avec bruit : structure masquée}
+    On publie seulement des presque-multiples
+    \[
+      x_i=pq_i+r_i,
+    \]
+    où les $r_i$ sont petits. Le PGCD exact disparaît et retrouver $p$ devient difficile.
+  \end{exampleblock}
+\end{frame}
+
+\begin{frame}{Exemple AGCD du mémoire}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.48\textwidth}
+      \begin{block}{Sans bruit}
+        \[
+          x_1=91,\qquad x_2=143
+        \]
+        \[
+          \mathrm{pgcd}(91,143)=13.
+        \]
+        La clé $p=13$ est retrouvée.
+      \end{block}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \begin{exampleblock}{Avec bruit}
+        \[
+          x_1=13\cdot 7+2=93
+        \]
+        \[
+          x_2=13\cdot 11+3=146
+        \]
+        \[
+          \mathrm{pgcd}(93,146)=1.
+        \]
+      \end{exampleblock}
+    \end{column}
+  \end{columns}
+
+  \vspace{0.25cm}
+  Le bruit n'est pas un défaut : c'est ce qui empêche d'extraire la clé.
+\end{frame}
+
+\begin{frame}{DGHV symétrique : paramètres}
+  \begin{block}{Paramètres du mémoire}
+    Pour un paramètre de sécurité $\lambda$ :
     \begin{itemize}
-        \item \textbf{La solution :} Le \textit{Fully Homomorphic Encryption} (FHE).
-        \item \textbf{Objectif :} Évaluer des fonctions mathématiques arbitraires directement sur les cryptogrammes.
-        \item \textbf{La rupture (2009) :} Craig Gentry prouve l'existence d'un tel schéma grâce au concept de \textit{bootstrapping}.
+      \item $p$ : clé secrète, entier impair, taille environ $\lambda^2$ bits ;
+      \item $q$ : grand entier aléatoire, taille environ $\lambda^5$ bits ;
+      \item $r$ : petit entier aléatoire, taille environ $\lambda$ bits ;
+      \item $b\in\{0,1\}$ : bit à chiffrer.
     \end{itemize}
+  \end{block}
+
+  \begin{exampleblock}{Idée}
+    Construire un entier très proche d'un multiple de $p$, en plaçant le bit dans la parité.
+  \end{exampleblock}
 \end{frame}
 
-\begin{frame}{Modèle de calcul : Les circuits booléens}
-    Les ordinateurs n'évaluent pas des fonctions mathématiques complexes, mais des réseaux de \textbf{portes logiques}.
-    
-    \vspace{0.5cm}
-    
-    \begin{block}{Universalité sur $\mathbb{F}_2$}
-        Toute fonction calculable peut être traduite avec l'ensemble \(\{ \text{AND}, \text{XOR} \}\).
+\begin{frame}{DGHV symétrique : chiffrement}
+  \begin{block}{Algorithme de chiffrement}
+    \[
+      c = qp + 2r + b.
+    \]
+  \end{block}
+
+  \begin{itemize}
+    \item $qp$ cache la structure dans un grand multiple de $p$.
+    \item $2r$ ajoute du bruit, mais reste pair.
+    \item $b$ fixe la parité du chiffré modulo $p$.
+  \end{itemize}
+
+  \vspace{0.25cm}
+  \begin{center}
+    \[
+      \text{grand multiple de }p
+      \quad + \quad
+      \text{petit bruit pair}
+      \quad + \quad
+      \text{bit}
+    \]
+  \end{center}
+\end{frame}
+
+\begin{frame}{DGHV symétrique : déchiffrement}
+  \begin{block}{Algorithme de déchiffrement}
+    \[
+      b=(c\bmod p)\bmod 2.
+    \]
+  \end{block}
+
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.5\textwidth}
+      \[
+        c\bmod p
+        =
+        (qp+2r+b)\bmod p
+        =
+        2r+b.
+      \]
+    \end{column}
+    \begin{column}{0.46\textwidth}
+      \[
+        (2r+b)\bmod 2=b.
+      \]
+    \end{column}
+  \end{columns}
+
+  \begin{exampleblock}{Condition de correction}
+    Le bruit doit rester assez petit :
+    \[
+      |2r+b|<\frac{p}{2}.
+    \]
+  \end{exampleblock}
+\end{frame}
+
+\begin{frame}{DGHV asymétrique : rendre le chiffrement public}
+  \begin{block}{Clés}
+    \begin{itemize}
+      \item clé secrète : $p$ ;
+      \item clé publique : des presque-multiples
+      \[
+        x_i=q_ip+2r_i.
+      \]
+    \end{itemize}
+  \end{block}
+
+  \begin{block}{Chiffrement public d'un bit $b$}
+    On choisit un sous-ensemble aléatoire $S$ et un bruit $r$ :
+    \[
+      c=\left(b+2r+\sum_{i\in S}x_i\right)\bmod x_0.
+    \]
+  \end{block}
+
+  Le chiffré garde la forme $pQ+2R+b$, donc le même déchiffrement fonctionne.
+\end{frame}
+
+\begin{frame}{Pourquoi le chiffrement public garde la bonne forme}
+  \small
+  \begin{block}{Développement}
+    Comme $x_i=q_ip+2r_i$, on a
+    \[
+      c=b+2r+\sum_{i\in S}(q_ip+2r_i)+kx_0.
+    \]
+    En remplaçant aussi $x_0=q_0p+2r_0$ :
+    \[
+      c=
+      p\left(\sum_{i\in S}q_i+kq_0\right)
+      +2\left(r+\sum_{i\in S}r_i+kr_0\right)
+      +b.
+    \]
+  \end{block}
+
+  \begin{exampleblock}{Conclusion}
+    Le serveur chiffre avec la clé publique, mais seul $p$ permet de retirer le multiple principal et de lire la parité.
+  \end{exampleblock}
+\end{frame}
+
+\begin{frame}{Addition homomorphe dans DGHV}
+  \begin{block}{Deux chiffrés}
+    \[
+      c_1=pq_1+2r_1+b_1,\qquad
+      c_2=pq_2+2r_2+b_2.
+    \]
+  \end{block}
+
+  \begin{block}{Somme}
+    \[
+      c_1+c_2
+      =
+      p(q_1+q_2)+2(r_1+r_2)+(b_1+b_2).
+    \]
+  \end{block}
+
+  \begin{itemize}
+    \item Modulo $2$, $b_1+b_2$ correspond à $b_1\oplus b_2$.
+    \item Le bruit devient $r_1+r_2$ : croissance linéaire.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Multiplication homomorphe dans DGHV}
+  \small
+  \begin{block}{Produit}
+    \[
+      c_1c_2
+      =
+      (pq_1+2r_1+b_1)(pq_2+2r_2+b_2).
+    \]
+    En regroupant les multiples de $p$ :
+    \[
+      c_1c_2
+      =
+      p(\cdots)
+      +2(2r_1r_2+r_1b_2+r_2b_1)
+      +b_1b_2.
+    \]
+  \end{block}
+
+  \begin{itemize}
+    \item Le message devient $b_1b_2$ : porte AND.
+    \item Le bruit contient un terme $r_1r_2$ : croissance beaucoup plus rapide.
+    \item C'est la multiplication qui limite la profondeur du circuit.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Budget de bruit : exemple de correction}
+  \begin{block}{Clé secrète}
+    Prenons $p=101$, donc le seuil critique est $p/2=50{,}5$.
+  \end{block}
+
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.48\textwidth}
+      \begin{exampleblock}{Correct}
+        \[
+          b=1,\quad 2r=10
+        \]
+        \[
+          c=2000\cdot 101+10+1.
+        \]
+        \[
+          c\bmod 101=11,\quad 11\bmod 2=1.
+        \]
+      \end{exampleblock}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \begin{block}{Échec}
+        \[
+          b=0,\quad 2r=64
+        \]
+        \[
+          64>50{,}5,\quad [c]_{101}=64\equiv -37.
+        \]
+        \[
+          -37\bmod 2=1\neq 0.
+        \]
+      \end{block}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{DGHV : du somewhat au fully homomorphic}
+  \begin{block}{Limite}
+    DGHV sait additionner et multiplier, mais seulement tant que le bruit reste sous le seuil. Il est donc d'abord \textit{somewhat homomorphic}.
+  \end{block}
+
+  \begin{exampleblock}{Idée de Gentry}
+    Si le schéma peut évaluer son propre déchiffrement, alors il peut produire :
+    \[
+      c_{\mathrm{bruit}}
+      \quad \longmapsto \quad
+      \Enc(\Dec(c_{\mathrm{bruit}})).
+    \]
+    C'est le même message, dans un chiffré rafraîchi.
+  \end{exampleblock}
+
+  Le serveur reçoit une clé de bootstrapping : la clé secrète elle-même chiffrée.
+\end{frame}
+
+\begin{frame}{Pourquoi le bootstrapping DGHV est difficile}
+  \begin{block}{Circuit de déchiffrement}
+    \[
+      m=(c\bmod p)\bmod 2.
+    \]
+  \end{block}
+
+  \begin{itemize}
+    \item Le calcul $c\bmod p$ repose sur une division euclidienne.
+    \item Cette division a une profondeur multiplicative trop grande.
+    \item L'évaluer homomorphiquement créerait plus de bruit qu'elle n'en retire.
+  \end{itemize}
+
+  \begin{exampleblock}{Solution du mémoire}
+    Alléger le déchiffrement avant de le bootstrapper : c'est la technique du \textit{squashing}.
+  \end{exampleblock}
+\end{frame}
+
+\begin{frame}{Squashing : alléger le déchiffrement}
+  \small
+  \begin{block}{Principe}
+    On ajoute à la clé publique des nombres rationnels $y_i$ et on remplace le secret $1/p$ par une approximation utilisant un vecteur très creux :
+    \[
+      \sum_{i=1}^n s_i y_i \approx \frac{1}{p},
+      \qquad
+      s_i\in\{0,1\}.
+    \]
+  \end{block}
+
+  \begin{block}{Déchiffrement écrasé}
+    Le serveur calcule en clair
+    \[
+      z_i=(c\,y_i)\bmod 2,
+    \]
+    puis le déchiffrement devient
+    \[
+      b=
+      \left(
+      c-\left\lfloor\sum_{i=1}^n s_i z_i\right\rceil
+      \right)\bmod 2.
+    \]
+  \end{block}
+
+  Comme le vecteur $s$ est creux, la somme contient peu de termes effectifs.
+\end{frame}
+
+\begin{frame}{Bilan DGHV}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.49\textwidth}
+      \begin{exampleblock}{Ce que DGHV montre très bien}
         \begin{itemize}
-            \item \textbf{XOR} $\iff$ Addition modulo 2
-            \item \textbf{AND} $\iff$ Multiplication modulo 2
+          \item le bruit protège le secret ;
+          \item addition et multiplication donnent XOR et AND ;
+          \item le bootstrapping transforme un schéma limité en FHE.
         \end{itemize}
-    \end{block}
-
-    \vspace{0.2cm}
-    \textit{Conséquence :} Si un cryptosystème permet d'additionner et de multiplier des chiffrés, il peut évaluer \textbf{n'importe quel programme}.
+      \end{exampleblock}
+    \end{column}
+    \begin{column}{0.49\textwidth}
+      \begin{block}{Limites}
+        \begin{itemize}
+          \item chiffrés très volumineux ;
+          \item multiplication très coûteuse ;
+          \item bootstrapping complexe à rendre efficace.
+        \end{itemize}
+      \end{block}
+    \end{column}
+  \end{columns}
 \end{frame}
 
-% ==========================================
-\section{DGHV : Chiffrement sur les entiers}
-% ==========================================
+% =========================================================
+\section{CKKS}
 
-\begin{frame}{Le schéma DGHV (2010)}
-    \textbf{Idée principale :} Remplacer les mathématiques complexes des réseaux (Gentry) par l'arithmétique des entiers.
-    
-    \begin{block}{Le Problème AGCD}
-        Retrouver la clé secrète $p$ à partir de "presque-multiples" :
-        \[ x_i = p \cdot q_i + r_i \]
-        Le \textbf{bruit} ($r_i$) est indispensable : sans lui, un simple PGCD brise le système.
-    \end{block}
+\begin{frame}{CKKS : un autre objectif}
+  \begin{block}{Changement de paradigme}
+    CKKS chiffre des nombres réels ou complexes et accepte une erreur contrôlée. Le bruit est interprété comme une approximation numérique.
+  \end{block}
 
-    \begin{itemize}
-        \item \textbf{Chiffré :} $c = q \cdot p + 2r + b$
-        \item \textbf{Déchiffrement :} $b = (c \bmod p) \bmod 2$
-    \end{itemize}
+  \begin{itemize}
+    \item Adapté aux statistiques, au traitement du signal et au machine learning.
+    \item Pas adapté aux calculs exacts bit à bit.
+    \item Très intéressant car il peut traiter plusieurs valeurs dans un même chiffré.
+  \end{itemize}
+
+  \begin{center}
+    \[
+      \text{exactitude parfaite}
+      \quad \longrightarrow \quad
+      \text{précision flottante contrôlée}.
+    \]
+  \end{center}
 \end{frame}
 
-\begin{frame}{Le problème du bruit et le Bootstrapping}
-    \begin{alertblock}{L'explosion du bruit}
-        Chaque multiplication de chiffrés double la taille du bruit. S'il dépasse $p/2$, le déchiffrement échoue. Le schéma est limité (\textit{Somewhat Homomorphic}).
-    \end{alertblock}
+\begin{frame}{CKKS : anneau de travail}
+  \begin{block}{Anneau quotient}
+    CKKS travaille dans
+    \[
+      R_q=\ZZ_q[X]/(X^N+1),
+    \]
+    avec $N$ généralement puissance de $2$.
+  \end{block}
 
-    \vspace{0.3cm}
-    
-    \textbf{La solution : Le Bootstrapping}
-    \begin{itemize}
-        \item Évaluer le circuit de déchiffrement \textit{homomorphiquement} pour "nettoyer" le chiffré.
-        \item \textbf{Problème :} La division $(c \bmod p)$ est trop lourde.
-        \item \textbf{Le Squashing :} Remplacer la division par une somme de sous-ensembles (vecteur creux) avec $15$ additions environ.
-    \end{itemize}
+  \begin{itemize}
+    \item Les coefficients sont pris modulo $q$.
+    \item Les polynômes sont réduits modulo $X^N+1$.
+    \item Les calculs se font donc dans une structure finie et compatible avec RLWE.
+  \end{itemize}
+
+  \begin{exampleblock}{Exemple du mémoire}
+    Dans $\ZZ_{17}[X]/(X^2+1)$, on utilise $X^2\equiv -1$ pour ramener les produits.
+  \end{exampleblock}
 \end{frame}
 
-% ==========================================
-\section{CKKS : Calculs approchés}
-% ==========================================
+\begin{frame}{Pourquoi des polynômes pour stocker des vecteurs ?}
+  \begin{block}{Vectorisation}
+    CKKS ne chiffre pas seulement un nombre : un chiffré peut contenir environ $N/2$ nombres complexes.
+  \end{block}
 
-\begin{frame}{Le schéma CKKS (2017)}
-    \begin{block}{Un changement de paradigme}
-        Contrairement à DGHV, CKKS accepte que le résultat ne soit pas exact. C'est un schéma \textbf{approximatif} dédié aux nombres réels/complexes.
-    \end{block}
-    
-    \vspace{0.5cm}
-    
-    \textbf{Domaines d'application idéaux :}
-    \begin{itemize}
-        \item Machine Learning privé.
-        \item Traitement de signal, données statistiques.
-        \item Tout domaine où une erreur d'arrondi est tolérée (virgule flottante).
-    \end{itemize}
+  \begin{itemize}
+    \item On voit le polynôme par ses coefficients, mais aussi par ses valeurs en certaines racines de l'unité.
+    \item Un vecteur complexe est encodé comme un polynôme dont les évaluations approchent les composantes du vecteur.
+    \item Les additions et multiplications de polynômes deviennent des opérations composante par composante sur les données encodées.
+  \end{itemize}
 \end{frame}
 
-\begin{frame}{Encodage et gestion de l'échelle (Rescaling)}
-    \textbf{L'anneau de travail :} $R_q = \mathbb{Z}_q[X]/(X^N+1)$
-    
-    \vspace{0.3cm}
-    
-    \begin{itemize}
-        \item Les données (vecteurs complexes) sont encodées dans un polynôme via une erreur d'arrondi acceptée.
-        \item On utilise un \textbf{facteur d'échelle} $\Delta$.
-    \end{itemize}
+\begin{frame}{Encodage CKKS}
+  \small
+  \begin{block}{Racines de l'unité}
+    Pour $n\geq 1$ :
+    \[
+      \omega=\exp\left(\frac{i\pi}{n}\right)
+    \]
+    est une racine $2n$-ième de l'unité. CKKS utilise les racines primitives pour relier vecteurs et polynômes.
+  \end{block}
 
-    \begin{alertblock}{Le Rescaling}
-        Après une multiplication homomorphe, l'échelle devient $\Delta^2$. Il faut diviser le chiffré par $\Delta$ pour éviter la saturation (équivalent à la troncature en virgule flottante).
-    \end{alertblock}
+  \begin{block}{Encodage simplifié}
+    Pour un vecteur $\mathbf z=(z_1,\ldots,z_{n/2})\in\CC^{n/2}$ :
+    \[
+      \mathrm{Encodage}_{\Delta}(\mathbf z)
+      =
+      \left\lfloor \Delta\,\sigma(\mathbf z)\right\rceil
+      \in \ZZ[X]/(X^N+1).
+    \]
+  \end{block}
+
+  $\sigma$ représente l'interpolation polynomiale ; $\Delta$ contrôle la précision.
 \end{frame}
 
-% ==========================================
-\section{Bilan et Ouverture}
-% ==========================================
+\begin{frame}{Le facteur d'échelle $\Delta$}
+  \begin{block}{Pourquoi une échelle ?}
+    Les calculs dans $R_q$ utilisent des entiers modulaires. Pour représenter un réel $m$, on encode :
+    \[
+      \tilde m=\lfloor \Delta m\rceil.
+    \]
+  \end{block}
 
-\begin{frame}{Conclusion \& Ouverture}
+  \begin{itemize}
+    \item Plus $\Delta$ est grand, plus la précision initiale est bonne.
+    \item Mais les valeurs encodées grandissent et consomment le module $q$.
+    \item L'arrondi est déjà une première source d'erreur.
+  \end{itemize}
+
+  \begin{exampleblock}{Lecture}
+    CKKS fonctionne comme une arithmétique flottante chiffrée : il gère une mantisse approximative plutôt qu'un message exact.
+  \end{exampleblock}
+\end{frame}
+
+\begin{frame}{CKKS : vue d'ensemble de l'algorithme}
+  \begin{block}{Chaîne de traitement}
+    \begin{enumerate}
+      \item Générer les clés $(\pk,\sk)$ dans $R_q$.
+      \item Encoder un vecteur $\mathbf z$ avec l'échelle $\Delta$.
+      \item Chiffrer le polynôme encodé.
+      \item Évaluer additions et multiplications.
+      \item Après chaque multiplication : relinéarisation puis rescaling.
+      \item Déchiffrer et décoder pour obtenir une approximation.
+    \end{enumerate}
+  \end{block}
+\end{frame}
+
+\begin{frame}{CKKS : génération des clés}
+  \begin{block}{Dans $R_q=\ZZ_q[X]/(X^N+1)$}
+    \begin{enumerate}
+      \item choisir un petit secret $s$, souvent à coefficients dans $\{-1,0,1\}$ ;
+      \item choisir $a$ aléatoire uniforme dans $R_q$ ;
+      \item choisir un petit bruit $e$ ;
+      \item publier
+      \[
+        \pk=(a,b),\qquad b=-as+e\pmod q.
+      \]
+    \end{enumerate}
+  \end{block}
+
+  \begin{exampleblock}{Sécurité}
+    La paire $(a,b)$ cache $s$ à cause du bruit $e$ : c'est l'idée du problème RLWE.
+  \end{exampleblock}
+\end{frame}
+
+\begin{frame}{CKKS : chiffrement}
+  \begin{block}{Message encodé}
+    On part de
+    \[
+      m=\mathrm{Encodage}_{\Delta}(\mathbf z).
+    \]
+  \end{block}
+
+  \begin{block}{Chiffrement}
+    On choisit un petit $u$ et deux petits bruits $e_1,e_2$, puis
+    \[
+      c_0=bu+e_1+m\pmod q,
+      \qquad
+      c_1=au+e_2\pmod q.
+    \]
+    Le chiffré est
+    \[
+      \mathbf c=(c_0,c_1)\in R_q^2.
+    \]
+  \end{block}
+\end{frame}
+
+\begin{frame}{CKKS : déchiffrement}
+  \small
+  \begin{block}{Calcul de déchiffrement}
+    Le détenteur de $s$ calcule
+    \[
+      c_0+c_1s.
+    \]
+    En remplaçant $b$ par $-as+e$ :
+    \[
+      c_0+c_1s
+      =
+      (bu+e_1+m)+(au+e_2)s
+    \]
+    \[
+      =
+      m+(eu+e_1+e_2s).
+    \]
+  \end{block}
+
+  \begin{exampleblock}{Conclusion}
+    On retrouve le message encodé $m$ à une petite erreur près, puis on décode et on divise par l'échelle.
+  \end{exampleblock}
+\end{frame}
+
+\begin{frame}{CKKS : addition homomorphe}
+  \begin{block}{Deux chiffrés}
+    \[
+      \mathbf c=(c_0,c_1),\qquad
+      \mathbf d=(d_0,d_1).
+    \]
+  \end{block}
+
+  \begin{block}{Addition coefficient par coefficient}
+    \[
+      \mathbf c+\mathbf d=(c_0+d_0,\ c_1+d_1).
+    \]
+  \end{block}
+
+  \[
+    (c_0+d_0)+(c_1+d_1)s
+    =
+    (c_0+c_1s)+(d_0+d_1s)
+    \approx m+m'.
+  \]
+
+  Le bruit augmente peu : il s'additionne.
+\end{frame}
+
+\begin{frame}{CKKS : multiplication homomorphe}
+  \small
+  \begin{block}{Produit de deux chiffrés de taille 2}
+    \[
+      (c_0,c_1)(d_0,d_1)
+      =
+      (c_0d_0,\ c_0d_1+c_1d_0,\ c_1d_1)
+      =
+      (x_0,x_1,x_2).
+    \]
+  \end{block}
+
+  \begin{block}{Pourquoi cela correspond au produit}
+    \[
+      x_0+x_1s+x_2s^2
+      =
+      (c_0+c_1s)(d_0+d_1s)
+      \approx mm'.
+    \]
+  \end{block}
+
+  \begin{itemize}
+    \item Le résultat est correct algébriquement.
+    \item Mais le chiffré passe de taille $2$ à taille $3$.
+    \item Il faut relinéariser.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{CKKS : relinéarisation}
+  \small
+  \begin{block}{Problème}
+    Après multiplication, le déchiffrement contient un terme en $s^2$ :
+    \[
+      m\approx c_0+c_1s+c_2s^2.
+    \]
+  \end{block}
+
+  \begin{block}{Clé de relinéarisation}
+    On dispose d'une clé $(rk_0,rk_1)$ qui chiffre $s^2$ :
+    \[
+      rk_0+rk_1s\approx s^2.
+    \]
+  \end{block}
+
+  \begin{exampleblock}{Remplacement}
+    \[
+      c_2s^2\approx c_2(rk_0+rk_1s),
+    \]
+    donc
+    \[
+      (c_0',c_1')=(c_0+c_2rk_0,\ c_1+c_2rk_1).
+    \]
+  \end{exampleblock}
+\end{frame}
+
+\begin{frame}{CKKS : rescaling}
+  \begin{block}{Problème d'échelle}
+    Si
+    \[
+      \tilde m_1\approx m_1\Delta,
+      \qquad
+      \tilde m_2\approx m_2\Delta,
+    \]
+    alors
+    \[
+      \tilde m_1\tilde m_2\approx m_1m_2\Delta^2.
+    \]
+  \end{block}
+
+  \begin{block}{Rescaling}
+    On divise le chiffré par $\Delta$ :
+    \[
+      c_{\mathrm{rescaled}}
+      =
+      \left\lfloor\frac{c}{\Delta}\right\rceil
+      \approx m_1m_2\Delta.
+    \]
+  \end{block}
+
+  Cela garde les valeurs sous contrôle, mais consomme une partie du module $q$.
+\end{frame}
+
+\begin{frame}{CKKS : une multiplication complète}
+  \begin{center}
+    \[
+      \mathbf c,\mathbf d
+      \xrightarrow{\text{produit}}
+      (x_0,x_1,x_2)
+      \xrightarrow{\text{relinéarisation}}
+      (c_0',c_1')
+      \xrightarrow{\text{rescaling}}
+      \mathbf c_{\mathrm{propre}}.
+    \]
+  \end{center}
+
+  \begin{block}{Ce que chaque étape corrige}
     \begin{itemize}
-        \item \textbf{DGHV :} Pédagogique, élégant mathématiquement, mais complexe à rendre efficace (le bruit détruit l'information).
-        \item \textbf{CKKS :} Pragmatique, sacrifie l'exactitude absolue pour une efficacité redoutable sur les données du monde réel.
+      \item multiplication : calcule le produit des messages ;
+      \item relinéarisation : ramène un chiffré de taille $3$ à taille $2$ ;
+      \item rescaling : ramène l'échelle de $\Delta^2$ à $\Delta$.
     \end{itemize}
+  \end{block}
+\end{frame}
 
-    \vspace{0.5cm}
-    
-    \begin{block}{Ouverture : Le schéma TFHE (2016)}
-        Calcul sur le Tore réel ($\mathbb{R}/\mathbb{Z}$). Bootstrapping radicalement optimisé : permet d'évaluer des portes logiques en \textbf{millisecondes}. Ouvrant la voie aux microprocesseurs chiffrés.
-    \end{block}
-    
-    \vspace{0.5cm}
-    \centering
-    \textbf{Merci de votre attention !}
+\begin{frame}{CKKS : bruit, module et stratégie levelled}
+  \begin{block}{Paramètres pratiques}
+    Il faut choisir ensemble :
+    \begin{itemize}
+      \item le degré $N$ ;
+      \item le module $q$ ;
+      \item l'échelle $\Delta$ ;
+      \item la profondeur multiplicative attendue.
+    \end{itemize}
+  \end{block}
+
+  \begin{exampleblock}{Levelled FHE}
+    Si le circuit est connu à l'avance, on choisit $q$ assez grand pour supporter tous les rescalings, sans bootstrapping.
+  \end{exampleblock}
+
+  Le bootstrapping CKKS existe, mais il est coûteux ; en pratique on l'évite dès que possible.
+\end{frame}
+
+\begin{frame}{Bilan CKKS}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.49\textwidth}
+      \begin{exampleblock}{Forces}
+        \begin{itemize}
+          \item calcul sur réels et complexes ;
+          \item vectorisation de nombreux messages ;
+          \item très adapté aux calculs numériques.
+        \end{itemize}
+      \end{exampleblock}
+    \end{column}
+    \begin{column}{0.49\textwidth}
+      \begin{block}{Limites}
+        \begin{itemize}
+          \item résultats approximatifs ;
+          \item gestion délicate de l'échelle ;
+          \item multiplications coûteuses ;
+          \item bootstrapping encore lourd.
+        \end{itemize}
+      \end{block}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% =========================================================
+\section{TFHE}
+
+\begin{frame}{TFHE : pourquoi l'introduire après DGHV et CKKS ?}
+  \begin{block}{Troisième voie}
+    DGHV montre le principe, CKKS optimise le calcul numérique approché, TFHE vise le calcul logique exact avec un bootstrapping très rapide.
+  \end{block}
+
+  \begin{itemize}
+    \item TFHE signifie \textit{Fast Fully Homomorphic Encryption over the Torus}.
+    \item Introduit par Chillotti, Gama, Georgieva et Izabachène.
+    \item Améliore l'idée de FHEW.
+    \item Point fort : évaluer des portes logiques en rafraîchissant le bruit.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Le tore}
+  \begin{block}{Définition}
+    Le tore en dimension $1$ est
+    \[
+      \TT=\RR/\ZZ.
+    \]
+    On représente chaque classe par un réel dans $[0,1[$.
+  \end{block}
+
+  \begin{itemize}
+    \item Les calculs sont faits modulo $1$.
+    \item Cette structure est naturelle pour coder des phases ou des positions circulaires.
+    \item TFHE y place les messages et le bruit.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{TLWE : forme d'un chiffré TFHE}
+  \begin{block}{Échantillon TLWE}
+    Pour une clé secrète binaire $\mathbf s\in\{0,1\}^k$, un message $\mu\in\TT$ est chiffré par
+    \[
+      (\mathbf a,b)\in \TT^k\times\TT
+    \]
+    avec
+    \[
+      b=\sum_{i=1}^k a_i s_i + e + \mu \pmod 1.
+    \]
+  \end{block}
+
+  \begin{itemize}
+    \item $\mathbf a$ est uniforme ;
+    \item $e$ est un petit bruit ;
+    \item la sécurité repose sur la difficulté TLWE.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Encodage des bits dans TFHE}
+  \begin{block}{Codage du mémoire}
+    Un bit $m\in\{0,1\}$ est encodé par
+    \[
+      \mu=m\cdot\frac14\in\TT.
+    \]
+  \end{block}
+
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.46\textwidth}
+      \begin{exampleblock}{Bit 0}
+        \[
+          m=0
+          \quad \Rightarrow \quad
+          \mu=0.
+        \]
+      \end{exampleblock}
+    \end{column}
+    \begin{column}{0.46\textwidth}
+      \begin{exampleblock}{Bit 1}
+        \[
+          m=1
+          \quad \Rightarrow \quad
+          \mu=\frac14.
+        \]
+      \end{exampleblock}
+    \end{column}
+  \end{columns}
+
+  \vspace{0.25cm}
+  Si le bruit dépasse environ $1/8$, les deux valeurs ne sont plus distinguables.
+\end{frame}
+
+\begin{frame}{TFHE : calcul logique et bruit}
+  \begin{block}{Objectif}
+    Évaluer des portes booléennes directement sur des chiffrés TLWE.
+  \end{block}
+
+  \begin{itemize}
+    \item AND, OR, XOR permettent de construire des circuits complets.
+    \item Chaque porte ajoute du bruit.
+    \item TFHE rend possible un rafraîchissement très fréquent, typiquement à chaque porte.
+  \end{itemize}
+
+  \begin{exampleblock}{Différence avec CKKS}
+    CKKS amortit les calculs dans des vecteurs et évite le bootstrapping ; TFHE assume le bootstrapping comme une opération rapide et centrale.
+  \end{exampleblock}
+\end{frame}
+
+\begin{frame}{Bootstrapping programmable}
+  \begin{block}{Idée majeure}
+    Le bootstrapping TFHE ne fait pas seulement baisser le bruit : il applique aussi une fonction pendant le rafraîchissement.
+  \end{block}
+
+  \begin{center}
+    \[
+      \text{chiffré bruité}
+      \xrightarrow{\text{PBS + table de correspondance}}
+      \text{chiffré propre de } f(m).
+    \]
+  \end{center}
+
+  \begin{itemize}
+    \item La fonction $f$ est encodée dans une LUT, \textit{Look-Up Table}.
+    \item Le rafraîchissement devient une étape de calcul utile.
+    \item Cela permet des portes, des seuils, des comparaisons ou des fonctions non linéaires.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Bilan TFHE}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.49\textwidth}
+      \begin{exampleblock}{Forces}
+        \begin{itemize}
+          \item calcul booléen exact ;
+          \item bootstrapping très rapide ;
+          \item circuits profonds grâce au rafraîchissement fréquent.
+        \end{itemize}
+      \end{exampleblock}
+    \end{column}
+    \begin{column}{0.49\textwidth}
+      \begin{block}{Positionnement}
+        TFHE complète CKKS : il est moins naturel pour le calcul numérique massif, mais très adapté aux décisions logiques exactes.
+      \end{block}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% =========================================================
+\section{Synthèse}
+
+\begin{frame}{Comparer les trois schémas}
+  \small
+  \begin{tabularx}{\textwidth}{@{}lXXX@{}}
+    \toprule
+    & \textbf{DGHV} & \textbf{CKKS} & \textbf{TFHE}\\
+    \midrule
+    Espace & Entiers & Polynômes, réels/complexes & Tore\\
+    Données & Bits & Vecteurs approchés & Bits\\
+    Calcul & Exact & Approché & Exact\\
+    Sécurité & AGCD & RLWE & TLWE\\
+    Point clé & Bruit sur presque-multiples & Échelle, rescaling & PBS et LUT\\
+    Force & Compréhension du FHE & Calcul numérique vectorisé & Portes logiques rapides\\
+    Limite & Peu efficace en pratique & Approximation, bootstrapping lourd & Moins adapté au numérique flottant\\
+    \bottomrule
+  \end{tabularx}
+\end{frame}
+
+\begin{frame}{Message final du mémoire}
+  \begin{block}{Un même objectif}
+    Rendre possible le calcul sur données privées sans donner accès aux données elles-mêmes.
+  \end{block}
+
+  \begin{itemize}
+    \item DGHV explique le mécanisme fondamental : bruit, seuil, bootstrapping.
+    \item CKKS montre comment accepter l'approximation pour gagner en efficacité sur les données numériques.
+    \item TFHE montre comment rendre le bootstrapping assez rapide pour des circuits booléens profonds.
+  \end{itemize}
+
+  \vspace{0.35cm}
+  \begin{exampleblock}{Conclusion}
+    Le FHE n'est pas un schéma unique, mais une famille de compromis entre exactitude, profondeur, type de données et performance.
+  \end{exampleblock}
+\end{frame}
+
+\begin{frame}{Références principales}
+  \small
+  \begin{itemize}
+    \item C. Gentry, \textit{A fully homomorphic encryption scheme}, 2009.
+    \item M. van Dijk, C. Gentry, S. Halevi, V. Vaikuntanathan, \textit{Fully Homomorphic Encryption over the Integers}, 2010.
+    \item I. Chillotti, N. Gama, M. Georgieva, M. Izabachène, \textit{TFHE: Fast Fully Homomorphic Encryption over the Torus}, 2016/2020.
+    \item J. H. Cheon, A. Kim, M. Kim, Y. Song, \textit{Homomorphic Encryption for Arithmetic of Approximate Numbers}, 2017.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \centering
+  \vspace{1cm}
+  {\Huge Merci de votre attention}\\[1cm]
+  {\large Questions ?}
 \end{frame}
 
 \end{document}
