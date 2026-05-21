@@ -595,21 +595,6 @@
   $\sigma$ représente l'interpolation polynomiale ; $\Delta$ contrôle la précision.
 \end{frame}
 
-\begin{frame}{Le facteur d'échelle $\Delta$}
-  \begin{block}{Pourquoi une échelle ?}
-    Les calculs dans $R_q$ utilisent des entiers modulaires. Pour représenter un réel $m$, on encode :
-    \[
-      \tilde m=\lfloor \Delta m\rceil.
-    \]
-  \end{block}
-
-  \begin{itemize}
-    \item Plus $\Delta$ est grand, plus la précision initiale est bonne.
-    \item Mais les valeurs encodées grandissent et consomment le module $q$.
-    \item L'arrondi est déjà une première source d'erreur.
-  \end{itemize}
-
-\end{frame}
 
 \begin{frame}{CKKS : vue d'ensemble de l'algorithme}
   \begin{block}{Chaîne de traitement}
@@ -764,33 +749,6 @@
       (c_0',c_1')=(c_0+c_2rk_0,\ c_1+c_2rk_1).
     \]
   \end{exampleblock}
-\end{frame}
-
-\begin{frame}{CKKS : rescaling}
-  \begin{block}{Problème d'échelle}
-    Si
-    \[
-      \tilde m_1\approx m_1\Delta,
-      \qquad
-      \tilde m_2\approx m_2\Delta,
-    \]
-    alors
-    \[
-      \tilde m_1\tilde m_2\approx m_1m_2\Delta^2.
-    \]
-  \end{block}
-
-  \begin{block}{Rescaling}
-    On divise le chiffré par $\Delta$ :
-    \[
-      c_{\mathrm{rescaled}}
-      =
-      \left\lfloor\frac{c}{\Delta}\right\rceil
-      \approx m_1m_2\Delta.
-    \]
-  \end{block}
-
-  Cela garde les valeurs sous contrôle.
 \end{frame}
 
 \begin{frame}{CKKS : une multiplication complète}
