@@ -250,21 +250,21 @@
   Le bruit n'est pas un défaut : c'est ce qui empêche d'extraire la clé.
 \end{frame}
 
-\begin{frame}{DGHV symétrique : paramètres}
-  \begin{block}{Paramètres du mémoire}
-    Pour un paramètre de sécurité $\lambda$ :
-    \begin{itemize}
-      \item $p$ : clé secrète, entier impair, taille environ $\lambda^2$ bits ;
-      \item $q$ : grand entier aléatoire, taille environ $\lambda^5$ bits ;
-      \item $r$ : petit entier aléatoire, taille environ $\lambda$ bits ;
-      \item $b\in\{0,1\}$ : bit à chiffrer.
-    \end{itemize}
-  \end{block}
+% \begin{frame}{DGHV symétrique : paramètres}
+%   \begin{block}{Paramètres du mémoire}
+%     Pour un paramètre de sécurité $\lambda$ :
+%     \begin{itemize}
+%       \item $p$ : clé secrète, entier impair, taille environ $\lambda^2$ bits ;
+%       \item $q$ : grand entier aléatoire, taille environ $\lambda^5$ bits ;
+%       \item $r$ : petit entier aléatoire, taille environ $\lambda$ bits ;
+%       \item $b\in\{0,1\}$ : bit à chiffrer.
+%     \end{itemize}
+%   \end{block}
 
-  \begin{exampleblock}{Idée}
-    Construire un entier très proche d'un multiple de $p$, en plaçant le bit dans la parité.
-  \end{exampleblock}
-\end{frame}
+%   \begin{exampleblock}{Idée}
+%     Construire un entier très proche d'un multiple de $p$, en plaçant le bit dans la parité.
+%   \end{exampleblock}
+% \end{frame}
 
 \begin{frame}{DGHV symétrique : chiffrement}
   \begin{block}{Algorithme de chiffrement}
@@ -344,72 +344,114 @@
   Le chiffré garde la forme $pQ+2R+b$, donc le même déchiffrement fonctionne.
 \end{frame}
 
-\begin{frame}{Pourquoi le chiffrement public garde la bonne forme}
-  \small
-  \begin{block}{Développement}
-    Comme $x_i=q_ip+2r_i$, on a
-    \[
-      c=b+2r+\sum_{i\in S}(q_ip+2r_i)+kx_0.
-    \]
-    En remplaçant aussi $x_0=q_0p+2r_0$ :
-    \[
-      c=
-      p\left(\sum_{i\in S}q_i+kq_0\right)
-      +2\left(r+\sum_{i\in S}r_i+kr_0\right)
-      +b.
-    \]
-  \end{block}
+% \begin{frame}{Pourquoi le chiffrement public garde la bonne forme}
+%   \small
+%   \begin{block}{Développement}
+%     Comme $x_i=q_ip+2r_i$, on a
+%     \[
+%       c=b+2r+\sum_{i\in S}(q_ip+2r_i)+kx_0.
+%     \]
+%     En remplaçant aussi $x_0=q_0p+2r_0$ :
+%     \[
+%       c=
+%       p\left(\sum_{i\in S}q_i+kq_0\right)
+%       +2\left(r+\sum_{i\in S}r_i+kr_0\right)
+%       +b.
+%     \]
+%   \end{block}
 
-  \begin{exampleblock}{Conclusion}
-    Le serveur chiffre avec la clé publique, mais seul $p$ permet de retirer le multiple principal et de lire la parité.
+%   \begin{exampleblock}{Conclusion}
+%     Le serveur chiffre avec la clé publique, mais seul $p$ permet de retirer le multiple principal et de lire la parité.
+%   \end{exampleblock}
+% \end{frame}
+
+% \begin{frame}{Addition homomorphe dans DGHV}
+%   \begin{block}{Deux chiffrés}
+%     \[
+%       c_1=pq_1+2r_1+b_1,\qquad
+%       c_2=pq_2+2r_2+b_2.
+%     \]
+%   \end{block}
+
+%   \begin{block}{Somme}
+%     \[
+%       c_1+c_2
+%       =
+%       p(q_1+q_2)+2(r_1+r_2)+(b_1+b_2).
+%     \]
+%   \end{block}
+
+%   \begin{itemize}
+%     \item Modulo $2$, $b_1+b_2$ correspond à $b_1\oplus b_2$.
+%     \item Le bruit devient $r_1+r_2$ : croissance linéaire.
+%   \end{itemize}
+% \end{frame}
+
+% \begin{frame}{Multiplication homomorphe dans DGHV}
+%   \small
+%   \begin{block}{Produit}
+%     \[
+%       c_1c_2
+%       =
+%       (pq_1+2r_1+b_1)(pq_2+2r_2+b_2).
+%     \]
+%     En regroupant les multiples de $p$ :
+%     \[
+%       c_1c_2
+%       =
+%       p(\cdots)
+%       +2(2r_1r_2+r_1b_2+r_2b_1)
+%       +b_1b_2.
+%     \]
+%   \end{block}
+
+%   \begin{itemize}
+%     \item Le message devient $b_1b_2$ : porte AND.
+%     \item Le bruit contient un terme $r_1r_2$ : croissance beaucoup plus rapide.
+%     \item C'est la multiplication qui limite la profondeur du circuit.
+%   \end{itemize}
+% \end{frame}
+
+\begin{frame}{Opérations homomorphes et croissance du bruit}
+  Soient deux chiffrés : $c_1 = pq_1 + 2r_1 + b_1$ et $c_2 = pq_2 + 2r_2 + b_2$.
+
+  \vspace{0.3cm}
+
+  \begin{columns}[T,onlytextwidth]
+    % --- Colonne Addition ---
+    \begin{column}{0.48\textwidth}
+      \begin{block}{Addition $\longrightarrow$ Porte XOR}
+        \[
+          c_1 + c_2 = p(q_1+q_2) + 2(\mathbf{r_1+r_2}) + (b_1+b_2)
+        \]
+      \end{block}
+      \begin{itemize}
+        \item Le message devient $b_1 \oplus b_2$.
+        \item Le nouveau bruit est $\mathbf{r_1 + r_2}$.
+        \item Croissance \textbf{linéaire} (opération très peu coûteuse).
+      \end{itemize}
+    \end{column}
+
+    % --- Colonne Multiplication ---
+    \begin{column}{0.48\textwidth}
+      \begin{alertblock}{Multiplication $\longrightarrow$ Porte AND}
+        \[
+          c_1 c_2 = p(\dots) + 2(2\mathbf{r_1 r_2} + \dots) + b_1 b_2
+        \]
+      \end{alertblock}
+      \begin{itemize}
+        \item Le message devient $b_1 \times b_2$.
+        \item Le nouveau bruit contient le produit $\mathbf{r_1 r_2}$.
+        \item Croissance \textbf{quadratique} (la taille du bruit double).
+      \end{itemize}
+    \end{column}
+  \end{columns}
+
+  \vspace{0.4cm}
+
+  \begin{exampleblock}{Conséquence directe (Le goulot d'étranglement)}
+    C'est la \textbf{multiplication} qui consomme le budget de bruit de manière explosive. Elle limite drastiquement la profondeur du circuit qu'il est possible d'évaluer.
   \end{exampleblock}
-\end{frame}
-
-\begin{frame}{Addition homomorphe dans DGHV}
-  \begin{block}{Deux chiffrés}
-    \[
-      c_1=pq_1+2r_1+b_1,\qquad
-      c_2=pq_2+2r_2+b_2.
-    \]
-  \end{block}
-
-  \begin{block}{Somme}
-    \[
-      c_1+c_2
-      =
-      p(q_1+q_2)+2(r_1+r_2)+(b_1+b_2).
-    \]
-  \end{block}
-
-  \begin{itemize}
-    \item Modulo $2$, $b_1+b_2$ correspond à $b_1\oplus b_2$.
-    \item Le bruit devient $r_1+r_2$ : croissance linéaire.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Multiplication homomorphe dans DGHV}
-  \small
-  \begin{block}{Produit}
-    \[
-      c_1c_2
-      =
-      (pq_1+2r_1+b_1)(pq_2+2r_2+b_2).
-    \]
-    En regroupant les multiples de $p$ :
-    \[
-      c_1c_2
-      =
-      p(\cdots)
-      +2(2r_1r_2+r_1b_2+r_2b_1)
-      +b_1b_2.
-    \]
-  \end{block}
-
-  \begin{itemize}
-    \item Le message devient $b_1b_2$ : porte AND.
-    \item Le bruit contient un terme $r_1r_2$ : croissance beaucoup plus rapide.
-    \item C'est la multiplication qui limite la profondeur du circuit.
-  \end{itemize}
 \end{frame}
 
 \begin{frame}{Budget de bruit : exemple de correction}
