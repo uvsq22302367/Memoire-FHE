@@ -637,29 +637,6 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Encodage CKKS}
-  \small
-  \begin{block}{Racines de l'unité}
-    Pour $n\geq 1$ :
-    \[
-      \omega=\exp\left(\frac{i\pi}{n}\right)
-    \]
-    est une racine $2n$-ième de l'unité. CKKS utilise les racines primitives pour relier vecteurs et polynômes.
-  \end{block}
-
-  \begin{block}{Encodage simplifié}
-    Pour un vecteur $\mathbf z=(z_1,\ldots,z_{n/2})\in\CC^{n/2}$ :
-    \[
-      \mathrm{Encodage}_{\Delta}(\mathbf z)
-      =
-      \left\lfloor \Delta\,\sigma(\mathbf z)\right\rceil
-      \in \ZZ[X]/(X^N+1).
-    \]
-  \end{block}
-
-  $\sigma$ représente l'interpolation polynomiale ; $\Delta$ contrôle la précision.
-\end{frame}
-
 
 \begin{frame}{CKKS : vue d'ensemble de l'algorithme}
   \begin{block}{Chaîne de traitement}
@@ -690,6 +667,29 @@
   \begin{exampleblock}{Sécurité}
     La paire $(a,b)$ cache $s$ à cause du bruit $e$.
   \end{exampleblock}
+\end{frame}
+
+\begin{frame}{Encodage CKKS}
+  \small
+  \begin{block}{Racines de l'unité}
+    Pour $n\geq 1$ :
+    \[
+      \omega=\exp\left(\frac{i\pi}{n}\right)
+    \]
+    est une racine $2n$-ième de l'unité. CKKS utilise les racines primitives pour relier vecteurs et polynômes.
+  \end{block}
+
+  \begin{block}{Encodage}
+    Pour un vecteur $\mathbf z=(z_1,\ldots,z_{n/2})\in\CC^{n/2}$ :
+    \[
+      \mathrm{Encodage}_{\Delta}(\mathbf z)
+      =
+      \left\lfloor \sigma(\Delta\, \mathbf z)\right\rceil
+      \in \ZZ[X]/(X^N+1).
+    \]
+  \end{block}
+
+  $\sigma$ représente l'interpolation polynomiale ; $\Delta$ contrôle la précision.
 \end{frame}
 
 \begin{frame}{CKKS : chiffrement}
