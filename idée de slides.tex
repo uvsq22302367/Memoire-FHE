@@ -569,23 +569,6 @@
   \begin{itemize}
     \item Les coefficients sont pris modulo $q$.
     \item Les polynômes sont réduits modulo $X^N+1$.
-    \item Les calculs se font donc dans une structure finie et compatible avec RLWE.
-  \end{itemize}
-
-  \begin{exampleblock}{Exemple du mémoire}
-    Dans $\ZZ_{17}[X]/(X^2+1)$, on utilise $X^2\equiv -1$ pour ramener les produits.
-  \end{exampleblock}
-\end{frame}
-
-\begin{frame}{Pourquoi des polynômes pour stocker des vecteurs ?}
-  \begin{block}{Vectorisation}
-    CKKS ne chiffre pas seulement un nombre : un chiffré peut contenir environ $N/2$ nombres complexes.
-  \end{block}
-
-  \begin{itemize}
-    \item On voit le polynôme par ses coefficients, mais aussi par ses valeurs en certaines racines de l'unité.
-    \item Un vecteur complexe est encodé comme un polynôme dont les évaluations approchent les composantes du vecteur.
-    \item Les additions et multiplications de polynômes deviennent des opérations composante par composante sur les données encodées.
   \end{itemize}
 \end{frame}
 
@@ -626,9 +609,6 @@
     \item L'arrondi est déjà une première source d'erreur.
   \end{itemize}
 
-  \begin{exampleblock}{Lecture}
-    CKKS fonctionne comme une arithmétique flottante chiffrée : il gère une mantisse approximative plutôt qu'un message exact.
-  \end{exampleblock}
 \end{frame}
 
 \begin{frame}{CKKS : vue d'ensemble de l'algorithme}
@@ -648,7 +628,7 @@
   \begin{block}{Dans $R_q=\ZZ_q[X]/(X^N+1)$}
     \begin{enumerate}
       \item choisir un petit secret $s$, souvent à coefficients dans $\{-1,0,1\}$ ;
-      \item choisir $a$ aléatoire uniforme dans $R_q$ ;
+      \item choisir $a$ aléatoire dans $R_q$ ;
       \item choisir un petit bruit $e$ ;
       \item publier
       \[
@@ -658,7 +638,7 @@
   \end{block}
 
   \begin{exampleblock}{Sécurité}
-    La paire $(a,b)$ cache $s$ à cause du bruit $e$ : c'est l'idée du problème RLWE.
+    La paire $(a,b)$ cache $s$ à cause du bruit $e$.
   \end{exampleblock}
 \end{frame}
 
@@ -687,7 +667,6 @@
 \begin{frame}{CKKS : déchiffrement}
   \small
   \begin{block}{Calcul de déchiffrement}
-    Le détenteur de $s$ calcule
     \[
       c_0+c_1s.
     \]
@@ -811,7 +790,7 @@
     \]
   \end{block}
 
-  Cela garde les valeurs sous contrôle, mais consomme une partie du module $q$.
+  Cela garde les valeurs sous contrôle.
 \end{frame}
 
 \begin{frame}{CKKS : une multiplication complète}
