@@ -266,28 +266,51 @@
 %   \end{exampleblock}
 % \end{frame}
 
+% \begin{frame}{DGHV symétrique : chiffrement}
+%   \begin{block}{Algorithme de chiffrement}
+%     \[
+%       c = qp + 2r + b.
+%     \]
+%   \end{block}
+
+%   \begin{itemize}
+%     \item $qp$ cache la structure dans un grand multiple de $p$.
+%     \item $2r$ ajoute du bruit, mais reste pair.
+%     \item $b$ fixe la parité du chiffré modulo $p$.
+%   \end{itemize}
+
+%   \vspace{0.25cm}
+%   \begin{center}
+%     \[
+%       \text{grand multiple de }p
+%       \quad + \quad
+%       \text{petit bruit pair}
+%       \quad + \quad
+%       \text{bit}
+%     \]
+%   \end{center}
+% \end{frame}
+
 \begin{frame}{DGHV symétrique : chiffrement}
   \begin{block}{Algorithme de chiffrement}
     \[
-      c = qp + 2r + b.
+      c = q \cdot p + 2r + b
     \]
   \end{block}
 
+  Chaque terme de l'équation introduit un paramètre et possède un rôle précis :
   \begin{itemize}
-    \item $qp$ cache la structure dans un grand multiple de $p$.
-    \item $2r$ ajoute du bruit, mais reste pair.
-    \item $b$ fixe la parité du chiffré modulo $p$.
+    \item \textbf{$q \cdot p$} : un immense multiple aléatoire de la \textbf{clé secrète $p$} (entier impair). \\ 
+    Il sert à masquer la structure.
+    \item \textbf{$2r$} : un petit \textbf{bruit aléatoire $r$}. \\
+    Multiplié par 2, il protège le message tout en conservant une parité paire.
+    \item \textbf{$b \in \{0,1\}$} : le \textbf{message} à chiffrer. \\
+    Il détermine la parité finale du chiffré modulo $p$.
   \end{itemize}
 
-  \vspace{0.25cm}
+  \vspace{0.2cm}
   \begin{center}
-    \[
-      \text{grand multiple de }p
-      \quad + \quad
-      \text{petit bruit pair}
-      \quad + \quad
-      \text{bit}
-    \]
+    \textit{Structure : grand multiple de $p$ \quad + \quad petit bruit pair \quad + \quad bit}
   \end{center}
 \end{frame}
 
