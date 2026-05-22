@@ -856,7 +856,6 @@
   Le bootstrapping CKKS existe, mais il est coûteux ; en pratique on l'évite dès que possible.
 \end{frame}
 
-
 % =========================================================
 \section{TFHE}
 
@@ -908,11 +907,12 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Encodage des bits dans TFHE}
-  \begin{block}{Codage du mémoire}
-    Un bit $m\in\{0,1\}$ est encodé par
+\begin{frame}{TFHE : encodage des bits et bruit}
+
+  \begin{block}{Encodage d’un bit}
+    Un bit $m\in\{0,1\}$ est représenté dans $\TT$ par
     \[
-      \mu=m\cdot\frac14\in\TT.
+      \mu = m \cdot \frac14.
     \]
   \end{block}
 
@@ -921,40 +921,34 @@
       \begin{exampleblock}{Bit 0}
         \[
           m=0
-          \quad \Rightarrow \quad
-          \mu=0.
+          \quad\Rightarrow\quad
+          \mu=0
         \]
       \end{exampleblock}
     \end{column}
+
     \begin{column}{0.46\textwidth}
       \begin{exampleblock}{Bit 1}
         \[
           m=1
-          \quad \Rightarrow \quad
-          \mu=\frac14.
+          \quad\Rightarrow\quad
+          \mu=\frac14
         \]
       \end{exampleblock}
     \end{column}
   \end{columns}
 
-  \vspace{0.25cm}
-  Si le bruit dépasse environ $1/8$, les deux valeurs ne sont plus distinguables.
-\end{frame}
+  \vspace{0.2cm}
 
-\begin{frame}{TFHE : calcul logique et bruit}
-  \begin{block}{Objectif}
-    Évaluer des portes booléennes directement sur des chiffrés TLWE.
+  \begin{block}{Calcul logique et bruit}
+    \begin{itemize}
+      \item Les portes booléennes (AND, OR, XOR) s’évaluent directement sur des chiffrés TLWE.
+      \item Chaque opération augmente le bruit.
+      \item Si le bruit dépasse environ $1/8$, les deux encodages ne sont plus distinguables.
+      \item TFHE utilise donc un bootstrapping fréquent pour rafraîchir les chiffrés.
+    \end{itemize}
   \end{block}
 
-  \begin{itemize}
-    \item AND, OR, XOR permettent de construire des circuits complets.
-    \item Chaque porte ajoute du bruit.
-    \item TFHE rend possible un rafraîchissement très fréquent, typiquement à chaque porte.
-  \end{itemize}
-
-  \begin{exampleblock}{Différence avec CKKS}
-    CKKS amortit les calculs dans des vecteurs et évite le bootstrapping ; TFHE assume le bootstrapping comme une opération rapide et centrale.
-  \end{exampleblock}
 \end{frame}
 
 \begin{frame}{Bootstrapping programmable}
@@ -978,22 +972,31 @@
 \end{frame}
 
 \begin{frame}{Bilan TFHE}
+
   \begin{columns}[T,onlytextwidth]
-    \begin{column}{0.49\textwidth}
+
+    \begin{column}{0.48\textwidth}
       \begin{exampleblock}{Forces}
         \begin{itemize}
           \item calcul booléen exact ;
-          \item bootstrapping très rapide ;
-          \item circuits profonds grâce au rafraîchissement fréquent.
+          \item bootstrapping rapide ;
+          \item grand nombre d’opérations successives possibles.
         \end{itemize}
       \end{exampleblock}
     \end{column}
-    \begin{column}{0.49\textwidth}
-      \begin{block}{Positionnement}
-        TFHE complète CKKS : il est moins naturel pour le calcul numérique massif, mais très adapté aux décisions logiques exactes.
-      \end{block}
+
+    \begin{column}{0.48\textwidth}
+      \begin{alertblock}{Comparaison}
+        \begin{itemize}
+          \item TFHE est conçu pour les opérations logiques sur des bits chiffrés ;
+          \item CKKS est plus adapté aux calculs numériques approchés sur vecteurs ;
+          \item les deux schémas répondent donc à des usages complémentaires.
+        \end{itemize}
+      \end{alertblock}
     \end{column}
+
   \end{columns}
+
 \end{frame}
 
 % =========================================================
@@ -1005,32 +1008,37 @@
     \toprule
     & \textbf{DGHV} & \textbf{CKKS} & \textbf{TFHE}\\
     \midrule
-    Espace & Entiers & Polynômes, réels/complexes & Tore\\
-    Données & Bits & Vecteurs approchés & Bits\\
+    Structure & Entiers & Polynômes & Tore $\mathbb{T}$\\
+    Données & Bits & Vecteurs numériques & Bits\\
     Calcul & Exact & Approché & Exact\\
     Sécurité & AGCD & RLWE & TLWE\\
-    Point clé & Bruit sur presque-multiples & Échelle, rescaling & PBS et LUT\\
-    Force & Compréhension du FHE & Calcul numérique vectorisé & Portes logiques rapides\\
-    Limite & Peu efficace en pratique & Approximation, bootstrapping lourd & Moins adapté au numérique flottant\\
+    Gestion du bruit & Bootstrapping & Rescaling & PBS\\
+    Point fort & Schéma fondateur & Calcul vectorisé & Logique booléenne rapide\\
+    Limite & Peu efficace & Approximation & Peu adapté au calcul numérique\\
     \bottomrule
   \end{tabularx}
 \end{frame}
 
 \begin{frame}{Message final du mémoire}
-  \begin{block}{Un même objectif}
-    Rendre possible le calcul sur données privées sans donner accès aux données elles-mêmes.
+
+  \begin{block}{Objectif commun}
+    Effectuer des calculs sur des données chiffrées sans révéler les données.
   \end{block}
 
   \begin{itemize}
-    \item DGHV explique le mécanisme fondamental : bruit, seuil, bootstrapping.
-    \item CKKS montre comment accepter l'approximation pour gagner en efficacité sur les données numériques.
-    \item TFHE montre comment rendre le bootstrapping assez rapide pour des circuits booléens profonds.
+    \item DGHV introduit les mécanismes fondamentaux du FHE :
+          bruit, seuil de déchiffrement et bootstrapping.
+    \item CKKS privilégie l’efficacité pour les calculs numériques approchés.
+    \item TFHE privilégie les opérations logiques rapides grâce à un bootstrapping fréquent.
   \end{itemize}
 
-  \vspace{0.35cm}
+  \vspace{0.3cm}
+
   \begin{exampleblock}{Conclusion}
-    Le FHE n'est pas un schéma unique, mais une famille de compromis entre exactitude, profondeur, type de données et performance.
+    Le FHE regroupe plusieurs approches, chacune adaptée
+    à un type de calcul, de données et de compromis entre précision et efficacité.
   \end{exampleblock}
+
 \end{frame}
 
 \begin{frame}{Références principales}
